@@ -1,0 +1,22 @@
+﻿<Page x:Class="Ark.pageAddToNew"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      mc:Ignorable="d" 
+      d:DesignHeight="780" d:DesignWidth="1280"
+	Title="pageAddToNew">
+    <Grid Height="780" Width="1280" Background="Transparent">
+        <Canvas x:Name="canvasHowTo" Visibility="{Binding Path=UserIsNotSearching, Converter={StaticResource BoolVis}, FallbackValue=Visible}" HorizontalAlignment="Left" Height="461.857" Margin="346,229.643,0,0" VerticalAlignment="Top" Width="569" Background="{StaticResource Brush_Grey}">
+            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,3,3" Height="462.5" Width="569" Effect="{StaticResource DropShadowEffect}"/>
+            <Button x:Name="btnNewNote" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="92" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="11" Foreground="#FFA8A8A8" Background="{DynamicResource Brush_Grey}" Click="btnNewNote_Click" Margin="0,0,0,0" Effect="{StaticResource DropShadowEffect}" Canvas.Left="235" Canvas.Top="284">
+                <StackPanel Margin="5,5,5,5">
+                    <Image Source="icons/iconCheckmark.png" Height="60" Width="60"/>
+                </StackPanel>
+            </Button>
+            <Label Content="Create new folder and archive items" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" Effect="{StaticResource DropShadowEffect}" Canvas.Left="164" Canvas.Top="381" FontSize="14.667"/>
+            <Label Content="What should the new folder be named?" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" FontSize="21.333" Effect="{StaticResource DropShadowEffect}" Canvas.Left="115" Canvas.Top="81"/>
+        </Canvas>
+        <TextBox x:Name="txtNewFolderName" HorizontalAlignment="Left" Height="41" Margin="461,400,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="352"/>
+    </Grid>
+</Page>

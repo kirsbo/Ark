@@ -1,0 +1,59 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- *** HELPBAR BACKGROUNDS *** -->
+    <LinearGradientBrush x:Key="Brush_Green" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FF34B255" Offset="0"/>
+        <GradientStop Color="#FF1A6632" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush_Green_Highlight" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FF39E250" Offset="0"/>
+        <GradientStop Color="#FF239133" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Brush_Blue" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FFB6D2F5" Offset="0"/>
+        <GradientStop Color="#FF6D97CF" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush_Blue_Highlight" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FFB6D2F5" Offset="0"/>
+        <GradientStop Color="#FF6D97CF" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Brush_Red" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FFB23434" Offset="0"/>
+        <GradientStop Color="#FF661A1A" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush_Red_Highlight" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FFB23434" Offset="0"/>
+        <GradientStop Color="#FF661A1A" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- *** WORDBUTTON (LISTITEM) BACKGROUNDS *** -->
+    <LinearGradientBrush x:Key="Brush_LightGrey" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FF838F9B" Offset="0"/>
+        <GradientStop Color="#FF54606E" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Brush_Orange"  EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#dc9b5a" Offset="0"/>
+        <GradientStop Color="#bb5829" Offset="1"/>
+    </LinearGradientBrush>
+
+
+    <!-- *** MISC BACKGROUNDS *** -->
+    <LinearGradientBrush x:Key="Brush_Grey_HorizontalGradient" EndPoint="1,0.5" StartPoint="0,0.5">
+        <GradientStop Color="#181c22" Offset="0"/>
+        <GradientStop Color="#FF383E46" Offset="0.5"/>
+        <GradientStop Color="#181c22" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Brush_Grey" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FF484F58" Offset="0"/>
+        <GradientStop Color="#FF262C34" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush_Grey_Highlight" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FF484F58" Offset="0"/>
+        <GradientStop Color="#FF262C34" Offset="1"/>
+    </LinearGradientBrush>
+</ResourceDictionary>
