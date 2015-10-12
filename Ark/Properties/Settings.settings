@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="WordRootFolder" Type="System.String" Scope="User">
-      <Value Profile="(Default)">D:\Dropbox\Code\ArkCabinet</Value>
+      <Value Profile="(Default)">D:\Dropbox\Code\ArkCabinet\Folders</Value>
     </Setting>
   </Settings>
 </SettingsFile>

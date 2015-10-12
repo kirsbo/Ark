@@ -28,10 +28,19 @@ namespace Ark
             if (System.IO.Directory.Exists(Properties.Settings.Default.WordRootFolder) == false) {
                 MessageBox.Show("Root folder not found."); //# Redirect to settings
             }
+
+            string[] args = Environment.GetCommandLineArgs();
+
+            if (args.Length > 1)
+            {
+                InputCommandLineArgs inputArgs = new InputCommandLineArgs(args);
+                mainFrame.Navigate(new pageSearch(inputArgs));
+            }
             else
             {
                 mainFrame.Navigate(new pageSearch());
             }
+            
             
             
         }

@@ -1,25 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
-using System.IO;
-using System.Collections.ObjectModel;
 using Ark.ViewModels;
 using Ark.Models;
 using Ark.IO;
-using System.Windows.Media.Animation;
 
 namespace Ark
 {
@@ -29,50 +18,51 @@ namespace Ark
     public partial class pageSearch : Page
     {
         private ViewModelSearchPage vmSearchPage;
-        private Word currentSelectedWord
+        private ViewModelArchiveItems vmArchiveItems;
+        private ArchiveItem currentSelectedItem
         {
             get
             {
-                return (Word)listResult.SelectedItem;
+                return (ArchiveItem)listResult.SelectedItem;
             }
         }
 
         private void loadArgs()
         {
-             
+
         }
 
-        public pageSearch()
+        public pageSearch(ioInput input = null)
         {
             InitializeComponent();
-            vmSearchPage = new ViewModelSearchPage(vmHelp);
+            vmSearchPage = new ViewModelSearchPage(vmHelp, input);
+
             this.DataContext = vmSearchPage;
 
-            //Handling command arguments reading, and setting of focus to textsearch if there's no commandline arguments.
-            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => {
-                string[] args = Environment.GetCommandLineArgs();
+            vmArchiveItems = new ViewModelArchiveItems();
+            listResult.DataContext = vmArchiveItems;
+            txtSearch.DataContext = vmArchiveItems;
 
-                if (args.Length > 1)
-                {
-                    InputCommandLineArgs inputArgs = new InputCommandLineArgs(args);
-                    manageIOinput(inputArgs);
-                }
-                else
-                {
-                    Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(delegate()
-                    {
-                        txtSearch.Focus();
-                        Keyboard.Focus(txtSearch);
-                    }));
-                }
-            } ));
 
-            
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(delegate ()
+            {
+                txtSearch.Focus();
+                Keyboard.Focus(txtSearch);
+            }));
+
+
         }
 
         private void listResult_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            openWord(currentSelectedWord);
+            //All this code is to prevent double click event triggering when user double clicks the custom scrollbar in the results list.
+            var src = VisualTreeHelper.GetParent((DependencyObject)e.OriginalSource);
+            var srcType = src.GetType();
+            if (srcType == typeof(ListViewItem) || srcType == typeof(GridViewRowPresenter) || srcType==typeof(Grid))
+            {
+                selectArchiveItem(currentSelectedItem);
+            }
+
         }
 
         private void controls_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -80,12 +70,12 @@ namespace Ark
             switch (e.Key)
             {
                 case Key.Enter:
-                    if (vmSearchPage.UserIsRenamingWord) { FinishRename(); break; }
-                    openWord((Word)listResult.SelectedItem);
+                    if (vmArchiveItems.UserIsRenamingFolder) { FinishRename(); break; }
+                    selectArchiveItem((ArchiveItem)listResult.SelectedItem);
                     break;
                 case Key.F2:
-                    if (vmSearchPage.UserIsRenamingWord) { AbortRename(); break; }
-                    if (!vmSearchPage.UserIsRenamingWord) { StartRename(); break; }
+                    if (vmArchiveItems.UserIsRenamingFolder) { AbortRename(); break; }
+                    if (!vmArchiveItems.UserIsRenamingFolder) { StartRename(); break; }
                     break;
                 case Key.Down:
                     listResult.SelectNextItem();
@@ -96,119 +86,68 @@ namespace Ark
                 case Key.C:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
-                        if (vmSearchPage.UserIsRenamingWord == true) { break; }
-                        if (currentSelectedWord == null) { break; }
+                        if (vmArchiveItems.UserIsRenamingFolder == true) { break; }
+                        if (currentSelectedItem == null) { break; }
                         e.Handled = true;
-                        copyWordToClipboard(currentSelectedWord);
-                        
+                        copyArchiveItemToClipboard(currentSelectedItem);
+
                     }
                     break;
                 case Key.V:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         //If user is renaming, pasting will insert plain text into the textbox. If user is not renaming, we attempt to paste to the selected word or a new word.
-                        if (vmSearchPage.UserIsRenamingWord == true) { break; }
-                        
+                        if (vmArchiveItems.UserIsRenamingFolder == true) { break; }
+
                         e.Handled = true;
-                        OnPaste();
+                        OnPaste(false);
                     }
                     break;
             }
         }
 
         #region Copy/Pasting
-        private void copyWordToClipboard(Word word)
+        private void copyArchiveItemToClipboard(ArchiveItem archiveItem)
         {
-            StringCollection selectedWordPath = new StringCollection();
-            if (word.Type.IsFolder) {
-                selectedWordPath.Add(word.DirInfo.FullName);
-            }
-            if (word.Type.IsFile) {
-                selectedWordPath.Add(word.FileInfo.FullName);
-            }
+            StringCollection selectedItemPath = new StringCollection();
+            selectedItemPath.Add(archiveItem.DirInfo.FullName);
 
-            Clipboard.SetFileDropList(selectedWordPath);
-            vmHelp.ShowPositiveHelpbar(String.Format("I have copied {0} to the clipboard.", word.Name));
+            Clipboard.SetFileDropList(selectedItemPath);
+            vmHelp.ShowPositiveHelpbar(String.Format("I have copied {0} to the clipboard.", archiveItem.Name));
         }
 
-        private void OnPaste()
+        private void OnPaste(bool pasteOnSpecificItem)
         {
             InputClipboard inputClip = new InputClipboard();
 
-            if (currentSelectedWord == null)
+            managePasteInput(inputClip, pasteOnSpecificItem);
+        }
+
+        private void managePasteInput(InputClipboard inputClip, bool pasteOnSpecificItem)
+        {
+            if (!inputClip.IsFSO) { return; }
+            if (pasteOnSpecificItem)
             {
-                manageIOinput(inputClip);
+                ioFSOMover fileSaver = new ioFSOMover();
+                fileSaver.MoveFSOsToArchiveItem(inputClip.FSOPaths, currentSelectedItem);
             }
             else
             {
-                managePasteInput(inputClip);
-            }
-        }
-
-        private void managePasteInput(InputClipboard inputClip)
-        {
-            if (inputClip.IsFSO)
-            {
-                ioFSOMover fileSaver = new ioFSOMover();
-                fileSaver.MoveFSOsToWord(inputClip.FSOPaths, currentSelectedWord);
-            }
-
-            if (inputClip.IsText)
-            {
-                ioNoteTextSaver noteTextAdder = new ioNoteTextSaver();
-                noteTextAdder.PasteTextToWord(inputClip.ClipboardText, currentSelectedWord);
+                if (vmSearchPage.CurrentInput == null) {
+                    vmSearchPage.SetInput(inputClip);
+                }
+                else
+                {
+                    vmSearchPage.CurrentInput.AddPaths(inputClip.FSOPaths);
+                }
             }
         }
 
         #endregion
 
-        public void manageIOinput(ioInput input)
+        private void selectArchiveItem(ArchiveItem archiveItem)
         {
-            if (input is InputCommandLineArgs)
-            {
-                if (input.IsSingleNoteFile == false)
-                {
-                    vmSearchPage.UserDraggedFSOsOnDesktopIcon = true;
-                    return;
-                }
-                //Fall through, if user drag-dropped a single text file, as then we don't need to open "add to existing or create new" page.
-            }
-
-            if (input.IsSingleNoteFile)
-            {
-                vmSearchPage.CreateAndAddNoteFromFile(input.SingleFileDI);
-                return;
-            }
-
-            if (input.IsSingleFile)
-            {
-                vmSearchPage.CreateAndAddFolderFromList(input.FSOPaths);
-                return;
-            }
-
-            if (input.IsFSO == false)
-            {
-                InputClipboard inputClip = (InputClipboard)input;
-                vmSearchPage.CreateAndAddNoteFromString(inputClip.ClipboardText);
-                return;
-            }
-
-            if (input.IsSingleFolder)
-            {
-                vmSearchPage.CreateAndAddFolderFromFolder(input.SingleFolderDI);
-                return;
-            }
-
-            if (input.IsMultipleFSOs)
-            {
-                vmSearchPage.CreateAndAddFolderFromList(input.FSOPaths);
-                return;
-            }
-        }
-
-        private void openWord(Word word)
-        {
-            vmSearchPage.OpenWord(word);
+            vmSearchPage.OpenArchiveItem(archiveItem);
         }
 
         #region DragDrop handling
@@ -219,7 +158,6 @@ namespace Ark
             if (inputDD.ObjectHasDataPresent == false) { return; }
 
             vmSearchPage.UserIsDragging = true;
-            vmSearchPage.UserIsDraggingNote = inputDD.IsSingleNoteFile;
         }
 
         private void Grid_DragLeave(object sender, DragEventArgs e)
@@ -239,30 +177,30 @@ namespace Ark
 
         private void resultItem_DragEnter(object sender, DragEventArgs e)
         {
-            Word word = (Word)(sender as Grid).DataContext;
+            ArchiveItem word = (ArchiveItem)(sender as Grid).DataContext;
             listResult.SelectedItem = word;
         }
 
         private void canvasDragDropPanel_Drop(object sender, DragEventArgs e)
         {
+            //## Needs rewriting 
             vmSearchPage.UserIsDragging = false;
-            vmSearchPage.UserIsDraggingNote = false;
             vmSearchPage.UserIsDraggingOnDragDropPanel = false;
 
             InputDragDrop inputDD = new InputDragDrop(e);
             if (inputDD.ObjectHasDataPresent == false) { return; }
 
-            manageIOinput(inputDD);
+            //App.GlobalNavigator.Navigate(new pageArchive(inputDD));
         }
 
         private void resultItem_Drop(object sender, DragEventArgs e)
         {
-            Word word = (Word)(sender as Grid).DataContext;
+            ArchiveItem word = (ArchiveItem)(sender as Grid).DataContext;
             InputDragDrop inputDD = new InputDragDrop(e);
             if (inputDD.ObjectHasDataPresent == false) { return; }
 
             ioFSOMover fileSaver = new ioFSOMover();
-            fileSaver.MoveFSOsToWord(inputDD.FSOPaths, word);
+            fileSaver.MoveFSOsToArchiveItem(inputDD.FSOPaths, word);
         }
         #endregion
 
@@ -274,7 +212,7 @@ namespace Ark
 
         private void StartRename()
         {
-            vmSearchPage.UserIsRenamingWord = true;
+            vmArchiveItems.UserIsRenamingFolder = true;
             //Below is to make sure that the textbox holds the same value as the label (word name) when starting to rename. 
             //These could get out of sync if user first renames one textbox, but does not press enter (i.e. saving the rename), and then later tries to rename the same item again:
             //In this case the previously edited value will be shown, as there's only one-way databinding on the textbox (to avoid updating the word object before user has accepted the rename).
@@ -286,45 +224,37 @@ namespace Ark
 
         private void FinishRename()
         {
-            Word selectedWord = currentSelectedWord;
+            ArchiveItem selectedWord = currentSelectedItem;
 
-            ListBoxItem wordListItem = (ListBoxItem)listResult.ItemContainerGenerator.ContainerFromItem(listResult.SelectedItem);
-            TextBox wordNameTextBox = WpfUtils.FindVisualChild<TextBox>(wordListItem);
-            TextBlock wordNameLabel = WpfUtils.FindVisualChild<TextBlock>(wordListItem);
+            ListBoxItem archiveListItem = (ListBoxItem)listResult.ItemContainerGenerator.ContainerFromItem(listResult.SelectedItem);
+            TextBox archiveItemNameTextBox = WpfUtils.FindVisualChild<TextBox>(archiveListItem);
+            TextBlock archiveItemNameLabel = WpfUtils.FindVisualChild<TextBlock>(archiveListItem);
 
             IO.ioRenamer renamer = new IO.ioRenamer();
 
-            if (renamer.AttemptRename(currentSelectedWord, wordNameTextBox.Text))
+            string newName = archiveItemNameTextBox.Text;
+
+            if (renamer.AttemptRename(currentSelectedItem, newName))
             {
                 //This just syncs label with the new name (without the below line, the new name wouldn't get reflected in the label until user entered a new search query, thereby updating the collection).
-                wordNameLabel.Text = wordNameTextBox.Text;
+                archiveItemNameLabel.Text = newName;
+                vmArchiveItems.SearchFilter = newName;
             }
 
-            vmSearchPage.UserIsRenamingWord = false;
+            vmArchiveItems.UserIsRenamingFolder = false;
         }
 
         private void AbortRename()
         {
-            vmSearchPage.UserIsRenamingWord = false;
+            vmArchiveItems.UserIsRenamingFolder = false;
         }
 
         private void listResult_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Console.WriteLine("Selecting is changing.");
-            if (vmSearchPage.UserIsRenamingWord) { AbortRename(); }
+            if (vmArchiveItems.UserIsRenamingFolder) { AbortRename(); }
         }
 
         #endregion
-
-        private void btnNewFolder_Click(object sender, RoutedEventArgs e)
-        {
-            vmSearchPage.CreateAndAddNewWord(new WordType(WordType.WordTypeEnum.Folder));
-        }
-
-        private void btnNewNote_Click(object sender, RoutedEventArgs e)
-        {
-            vmSearchPage.CreateAndAddNewWord(new WordType(WordType.WordTypeEnum.Note));
-        }
 
         private void txtItemName_GotFocus(object sender, RoutedEventArgs e)
         {
@@ -347,6 +277,7 @@ namespace Ark
 
         private void txtSearch_TextChanged(object sender, TextChangedEventArgs e)
         {
+            //Code for hiding/showing help text and settings/help icons
             if (txtSearch.Text.Length > 0)
             {
                 vmSearchPage.UserIsSearching = true;
@@ -356,25 +287,10 @@ namespace Ark
             {
                 vmSearchPage.UserIsSearching = false;
                 vmSearchPage.UserIsNotSearching = true;
-                vmSearchPage.FilteredWords = new List<Word>(); //Emptying results list
             }
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            vmSearchPage.UserIsSearching = true;
-        }
 
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-            belowPanel.Content = new Ark.UserControls.UCHowToPanel(vmSearchPage);
-
-        }
-
-        private void Button_Click_2(object sender, RoutedEventArgs e)
-        {
-
-        }
 
         private void Grid_Drop(object sender, DragEventArgs e)
         {
@@ -383,20 +299,61 @@ namespace Ark
 
         private void btnCopyToClipboard_Click(object sender, RoutedEventArgs e)
         {
-            Word callingWord = (Word)sender;
-            copyWordToClipboard(callingWord);
+            ArchiveItem selectedItem = (ArchiveItem)sender;
+            copyArchiveItemToClipboard(selectedItem);
         }
 
         private void btnPasteFromClipboard_Click(object sender, RoutedEventArgs e)
         {
-            OnPaste();
+            OnPaste(true);
         }
 
-        private void Button_Click_3(object sender, RoutedEventArgs e)
+
+        private void btnNewFolder_Click(object sender, RoutedEventArgs e)
         {
-            txtSearch.Text = "Test";
+            vmArchiveItems.CreateNewFolder();
+        }
+
+        private void btnCancelArchiving_Click(object sender, RoutedEventArgs e)
+        {
+            vmSearchPage.ClearInput(); 
         }
 
 
+        #region MenuItem event handlers
+        private void MenuItem_Exit_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private void MenuItem_NewFolder_Click(object sender, RoutedEventArgs e)
+        {
+            vmArchiveItems.CreateNewFolder();
+        }
+
+        #endregion
+
+        private void ImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Test click");
+        }
+
+        private void btnNewFolder_OnClick(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void button_Click(object sender, RoutedEventArgs e)
+        {
+            //List<string> fsos = vmSearchPage.CurrentInput.FSOPaths;
+            vmSearchPage.CurrentInput.RemovePath(listInput.SelectedItem.ToString());
+
+        }
+
+        private void btnRemove_Click(object sender, RoutedEventArgs e)
+        {
+            vmSearchPage.CurrentInput.RemovePath(listInput.SelectedItem.ToString());
+            if (vmSearchPage.CurrentInput.FSOPaths.Count == 0) { vmSearchPage.ClearInput(); }
+        }
     }
 }

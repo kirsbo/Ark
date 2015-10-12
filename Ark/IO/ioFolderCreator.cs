@@ -12,7 +12,7 @@ namespace Ark.IO
 
         public DirectoryInfo CreateNamedFolder(string folderName)
         {
-            string newFolderPath = Path.Combine(base.folderFolderDI.FullName, folderName);
+            string newFolderPath = Path.Combine(base.rootFolderDI.FullName, folderName);
             if (Directory.Exists(newFolderPath))
             {
                 App.CurrentVMHelp.ShowNegativeHelpbar("I can't create a folder called " + folderName + " as it already exists.");
@@ -30,7 +30,7 @@ namespace Ark.IO
         public DirectoryInfo CreateFolderFromDI(DirectoryInfo folder)
         {
             string newFolderName = getNewFolderName(folder.Name);
-            string newFolderPath = Path.Combine(folderFolderDI.FullName, newFolderName);
+            string newFolderPath = Path.Combine(base.rootFolderDI.FullName, newFolderName);
 
             ioFSOMover fsoMover = new ioFSOMover();
             DirectoryInfo di = fsoMover.MoveFolderToFolder(folder, newFolderPath);
@@ -43,7 +43,7 @@ namespace Ark.IO
         public DirectoryInfo CreateNewFolder()
         {
             string folderName = getNewFolderName();
-            string newFolderPath = Path.Combine(folderFolderDI.FullName, folderName);
+            string newFolderPath = Path.Combine(base.rootFolderDI.FullName, folderName);
             DirectoryInfo di = new DirectoryInfo(newFolderPath);
 
             Directory.CreateDirectory(newFolderPath);
@@ -60,13 +60,13 @@ namespace Ark.IO
             if (baseFolderName.Length == 0) { baseFolderName = "Untitled folder"; }
             string newFolderName = null;
 
-            string fullPath = Path.Combine(folderFolderDI.FullName, baseFolderName);
+            string fullPath = Path.Combine(base.rootFolderDI.FullName, baseFolderName);
             if (Directory.Exists(fullPath) == false) { return fullPath; }
 
             while (Directory.Exists(fullPath) == true) //Incrementing counter in new folder name until we get a folder name that doesn't exist. This means we'll get "Untitled folder x" where x i a number.
             {
                 newFolderName = String.Format("{0} {1}", baseFolderName, counter.ToString());
-                fullPath = Path.Combine(folderFolderDI.FullName, newFolderName);
+                fullPath = Path.Combine(base.rootFolderDI.FullName, newFolderName);
                 counter++;
             }
 

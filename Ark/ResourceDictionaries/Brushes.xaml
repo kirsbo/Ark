@@ -19,6 +19,10 @@
         <GradientStop Color="#FFB6D2F5" Offset="0"/>
         <GradientStop Color="#FF6D97CF" Offset="1"/>
     </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush_DarkBlue" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FF0053BB" Offset="0"/>
+        <GradientStop Color="#FF003985" Offset="1"/>
+    </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="Brush_Red" EndPoint="0.5,1" StartPoint="0.5,0">
         <GradientStop Color="#FFB23434" Offset="0"/>

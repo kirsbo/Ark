@@ -4,18 +4,47 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.ComponentModel;
 
 namespace Ark.IO
 {
-    public class ioInput
+    public abstract class ioInput : INotifyPropertyChanged
     {
         public bool IsSingleFile { get; set; }
         public bool IsSingleFolder { get; set; }
-        public bool IsSingleNoteFile { get; set; }
         public bool IsMultipleFSOs { get; set; }
         public bool IsFSO { get; set; }
+        private int itemCount;
+        public int ItemCount
+        {
+            get { return itemCount; }
+            set
+            {
+                itemCount = value;
+                OnPropertyChanged(new PropertyChangedEventArgs("ItemCount"));
+            }
+        }
 
-        public List<string> FSOPaths { get; set; }
+        private List<string> fsoPaths;
+        public List<string> FSOPaths
+        {
+            get { return fsoPaths; }
+            set
+            {
+                fsoPaths = value;
+                OnPropertyChanged(new PropertyChangedEventArgs("FSOPaths"));
+            }
+        }
+        private List<string> fsoNamesSorted;
+        public List<string> FSONamesSorted
+        {
+            get { return fsoNamesSorted; }
+            set
+            {
+                fsoNamesSorted = value;
+                OnPropertyChanged(new PropertyChangedEventArgs("FSONamesSorted"));
+            }
+        }
 
         public string FirstFSO
         {
@@ -43,21 +72,44 @@ namespace Ark.IO
         {
             IsSingleFile = false;
             IsSingleFolder = false;
-            IsSingleNoteFile = false;
             IsMultipleFSOs = false;
             IsFSO = false;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void OnPropertyChanged(PropertyChangedEventArgs e)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, e);
+            }
+        }
+
+        public void AddPaths(List<string> fsoPaths)
+        {
+            FSOPaths.AddRange(fsoPaths);
+            initFSOPath(FSOPaths);
+        }
+
+        public void RemovePath(string fsoPath)
+        {
+            FSOPaths.Remove(fsoPath);
+            initFSOPath(FSOPaths);
         }
 
         protected void initFSOPath(List<string> fsoPaths)
         {
             IsFSO = true;
             FSOPaths = fsoPaths;
+
+            FSONamesSorted = getSortedFSONames(FSOPaths);
+
             if (FSOPaths.Count == 1)
             {
                 if (isFile(FirstFSO))
                 {
                     IsSingleFile = true;
-                    if (FirstFSO.ToLower().EndsWith(".txt")) { IsSingleNoteFile = true; }
                 }
                 else
                 {
@@ -65,6 +117,8 @@ namespace Ark.IO
                 }
             }
             else if (FSOPaths.Count > 1) { IsMultipleFSOs = true; }
+
+            ItemCount = FSOPaths.Count;
         }
 
 
@@ -79,6 +133,30 @@ namespace Ark.IO
             {
                 return true;
             }
+        }
+
+
+        private List<string> getSortedFSONames(List<string> fsoPaths)
+        {
+            List<string> sortedFSONames = new List<string>();
+            foreach (string path in fsoPaths)
+            {
+                FileAttributes attr = File.GetAttributes(path);
+
+                if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
+                {
+                    DirectoryInfo di = new DirectoryInfo(path);
+                    sortedFSONames.Add(di.FullName);
+                }
+                else
+                {
+                    FileInfo fi = new FileInfo(path);
+                    sortedFSONames.Add(fi.FullName);
+                }
+            }
+
+            sortedFSONames = sortedFSONames.OrderBy(x => x).ToList();
+            return sortedFSONames;
         }
     }
 }

@@ -3,13 +3,65 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:UserControls="clr-namespace:Ark.UserControls" x:Class="Ark.pageSearch" 
       xmlns:local="clr-namespace:Ark.ViewModels"
+      xmlns:CustomControls="clr-namespace:Ark.CustomControls" 
+      xmlns:ValueConverters="clr-namespace:Ark.ValueConverters"
+      x:Class="Ark.pageSearch"
     mc:Ignorable="d" 
       d:DesignHeight="780" d:DesignWidth="1280"
 	  Title="pageSearch">
     <Page.Resources>
         <ResourceDictionary>
+            <ValueConverters:ConverterFSOPathToIcon x:Key="FSOToIcon" />
+            <ValueConverters:ConverterFSOPathToFriendlyName x:Key="FSOToName" />
+            <!-- *** Buttons -->
+            <Style x:Key="OrangeButton" TargetType="{x:Type Button}">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="HorizontalAlignment" Value="Left"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="VerticalAlignment" Value="Top"/>
+                <Setter Property="FontFamily" Value="Cabin"/>
+                <Setter Property="FontSize" Value="11px"/>
+                <Setter Property="Effect" Value="{StaticResource DropShadowEffect}"/>
+                <Setter Property="Background" Value="{DynamicResource Brush_Grey}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border x:Name="border" BorderThickness="1" BorderBrush="DarkGray" CornerRadius="3" Background="{TemplateBinding Background}">
+                                <Grid >
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" x:Name="content"/>
+                                    <StackPanel Margin="10,5,5,5" Orientation="Horizontal">
+                                        <Image Source="icons/iconFolderBig.png" Height="24" Width="24"/>
+                                        <Label Content="{TemplateBinding Content}" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" Effect="{StaticResource DropShadowEffect}" FontSize="14.667" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <!-- *** FSO INPUT LIST *** -->
+            <DataTemplate x:Key="template_inputItem">
+                <Grid>
+                    <Grid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem x:Name="btnRemove"  Header="Remove" Click="btnRemove_Click"/>
+                        </ContextMenu>
+                    </Grid.ContextMenu>
+                    <Border x:Name="itemBorder" BorderThickness="0" Background="Transparent"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{Binding Converter={StaticResource FSOToIcon}}" Height="24" Width="24" Margin="0,4,0,0"/>
+                        <TextBlock x:Name="labelName" TextTrimming="CharacterEllipsis" Text="{Binding Converter={StaticResource FSOToName}}" MaxWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" Margin="4,6,0,0" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="12" Foreground="#FFDEDFE0">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                    <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+            </DataTemplate>
             <!-- *** LISTBOX ITEMS *** -->
             <DataTemplate x:Key="template_resultItem_Big">
                 <Grid AllowDrop="True" Drop="resultItem_Drop" DragEnter="resultItem_DragEnter" Margin="0,0,15,15">
@@ -23,7 +75,8 @@
                     <Border x:Name="itemBorder" BorderThickness="2,2,2,2" BorderBrush="White" Margin="10,0,0,0" CornerRadius="3,3,3,3" Background="{StaticResource Brush_LightGrey}"/>
                     <Image x:Name="imgItem" HorizontalAlignment="Left" Height="48" Margin="24,11,0,0" VerticalAlignment="Top" Width="48" Source="{Binding IconPath}"/>
                     <TextBox x:Name="txtItemName" TextWrapping="Wrap" Text="{Binding Name, Mode=OneWay}" GotFocus="txtItemName_GotFocus" Margin="80,23,7,21" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="16" Foreground="Black" Visibility="Collapsed"/>
-                    <TextBlock x:Name="labelName" TextWrapping="Wrap" Text="{Binding Name}" Margin="80,26,7,24" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="16" Foreground="White"/>
+                    <TextBlock x:Name="labelName" TextWrapping="Wrap" Text="{Binding Name}" Margin="80,26,7,24" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="16" Foreground="#FFDEDFE0" Effect="{StaticResource DropShadowEffect}"/>
+                    <TextBlock x:Name="labelDate" TextWrapping="Wrap" Text="{Binding LastAccessedDateFriendly}" HorizontalAlignment="Right" Margin="0,12,12,0" FontStyle="Italic" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="12" Foreground="#FFDEDFE0"/>
                 </Grid>
                 <DataTemplate.Triggers>
                     <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
@@ -32,7 +85,7 @@
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
                             <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
-                            <Condition Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Page}}, Path=DataContext.UserIsRenamingWord}" Value="true" />
+                            <Condition Binding="{Binding DataContext.UserIsRenamingFolder, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBox}}}" Value="true" />
                         </MultiDataTrigger.Conditions>
                         <Setter TargetName="txtItemName" Property="Visibility" Value="Visible" />
                         <Setter TargetName="txtItemName" Property="FocusManager.FocusedElement" Value="{Binding ElementName=txtItemName}"/>
@@ -42,16 +95,17 @@
             </DataTemplate>
 
             <DataTemplate x:Key="template_resultItem_Small">
-                <Grid AllowDrop="True" Drop="resultItem_Drop" DragEnter="resultItem_DragEnter" Margin="0,0,8,8">
+                <Grid AllowDrop="True" Drop="resultItem_Drop" DragEnter="resultItem_DragEnter" Margin="0,0,8,8" Effect="{StaticResource DropShadowEffect}">
                     <Grid.ContextMenu>
                         <ContextMenu>
                             <MenuItem x:Name="btnRename"  Header="Rename" Click="btnRename_Click"/>
                         </ContextMenu>
                     </Grid.ContextMenu>
-                    <Border x:Name="itemBorder" BorderThickness="2,2,2,2" BorderBrush="White" Margin="5,0,0,0" CornerRadius="3,3,3,3" Background="{DynamicResource Brush_LightGrey}"/>
-                    <Image x:Name="imgItem" HorizontalAlignment="Left" Height="24" Margin="12,8,0,0" VerticalAlignment="Top" Width="24" Source="{Binding IconPath}"/>
+                    <Border x:Name="itemBorder" BorderThickness="1" BorderBrush="Black" Margin="5,0,0,0" CornerRadius="3,3,3,3" Background="{DynamicResource Brush_Grey}"/>
+                    <Image x:Name="imgItem" HorizontalAlignment="Left" Height="24" Margin="12,10,0,0" VerticalAlignment="Top" Width="24" Source="{Binding IconPath}"/>
                     <TextBox x:Name="txtItemName" TextWrapping="Wrap" Text="{Binding Name, Mode=OneWay}" GotFocus="txtItemName_GotFocus" Margin="45,10,0,10" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="11" Foreground="Black" Visibility="Collapsed"/>
-                    <TextBlock x:Name="labelName" TextWrapping="Wrap" Text="{Binding Name}" Margin="50,10,0,10" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="16" Foreground="White"/>
+                    <TextBlock x:Name="labelName" TextWrapping="Wrap" Text="{Binding Name}" Padding="5,0,0,5" Margin="40,14,0,10" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="14" Foreground="#FFDEDFE0" />
+                    <TextBlock x:Name="labelDate" TextWrapping="Wrap" Text="{Binding LastAccessedDateFriendly}" HorizontalAlignment="Right" Margin="0,10,12,0" FontStyle="Italic" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="10" Foreground="#FFDEDFE0"/>
                 </Grid>
 
                 <DataTemplate.Triggers>
@@ -61,7 +115,7 @@
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
                             <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
-                            <Condition Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Page}}, Path=DataContext.UserIsRenamingWord}" Value="true" />
+                            <Condition Binding="{Binding DataContext.UserIsRenamingFolder, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Page}}}" Value="true" />
                         </MultiDataTrigger.Conditions>
                         <Setter TargetName="txtItemName" Property="Visibility" Value="Visible" />
                         <Setter TargetName="txtItemName" Property="FocusManager.FocusedElement" Value="{Binding ElementName=txtItemName}"/>
@@ -70,7 +124,11 @@
                 </DataTemplate.Triggers>
             </DataTemplate>
         </ResourceDictionary>
+
     </Page.Resources>
+
+
+
 
     <Grid Width="1280" Height="780" Margin="0,1,0,-1" DragEnter="Grid_DragEnter" DragLeave="Grid_DragLeave" Drop="Grid_Drop" AllowDrop="True" Background="Transparent">
         <Grid.ContextMenu>
@@ -78,44 +136,121 @@
                 <MenuItem x:Name="btnPasteFromClipboard"  Header="Paste" Click="btnPasteFromClipboard_Click"/>
             </ContextMenu>
         </Grid.ContextMenu>
-        <Label Content="SEARCH YOUR ARCHIVE" HorizontalAlignment="Left" Margin="346,24,0,0" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FF7B8E9F" FontSize="14" Effect="{StaticResource DropShadowEffect}"/>
-        <Canvas x:Name="canvasSearch" Background="{StaticResource Brush_Grey}" HorizontalAlignment="Left" Height="112" Margin="346,55,0,0" VerticalAlignment="Top" Width="569">
-            <TextBox x:Name="txtSearch" Text="{Binding SearchFilter, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource styleTextbox}" TextWrapping="Wrap" Padding="10,0,0,0" BorderBrush="Black" Width="510" Height="56" Canvas.Left="31" Canvas.Top="29" PreviewKeyDown="controls_PreviewKeyDown" TextChanged="txtSearch_TextChanged"/>
-            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,3,3" Margin="0,0,0,0" Height="112" Width="569" Effect="{StaticResource DropShadowEffect}">
+        <!-- *** MENU BAR *** -->
+        <DockPanel>
+            <Menu DockPanel.Dock="Top" Background="{StaticResource Brush_Grey}" Height="30">
+                <MenuItem Header="_File" Foreground="#FFDEDFE0" Effect="{StaticResource DropShadowEffect}" FontFamily="Cabin" FontSize="14" Margin="5,5,0,0">
+                    <MenuItem Header="Archive _file(s)" Foreground="Black" />
+                    <MenuItem Header="Archive f_older" Foreground="Black"/>
+                    <MenuItem Header="_New folder" Click="MenuItem_NewFolder_Click" Foreground="Black"/>
+                    <MenuItem Header="_Settings" Foreground="Black" />
+                    <MenuItem Header="_Help" Foreground="Black" />
+                    <MenuItem Header="_Exit" Foreground="Black" Click="MenuItem_Exit_Click"/>
+                </MenuItem>
+            </Menu>
+            <StackPanel/>
+        </DockPanel>
 
-            </Border>
-            <Button x:Name="btnClearFilter" Height="30" Width="30" Canvas.Left="496.5" Canvas.Top="43" Background="{DynamicResource Brush_Grey}" Content="X" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="18" Foreground="#FF7B8E9F" Click="btnClearFilter_Click"/>
+
+        <Label Content="SEARCH YOUR ARCHIVE" HorizontalAlignment="Left" Margin="346,38,0,0" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FF7B8E9F" FontSize="14" Effect="{StaticResource DropShadowEffect}"/>
+        <Canvas x:Name="canvasSearch" Background="{StaticResource Brush_Grey}" HorizontalAlignment="Left" Height="86" Margin="346,70,0,0" VerticalAlignment="Top" Width="569">
+            <TextBox x:Name="txtSearch" Text="{Binding SearchFilter, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource styleTextbox}" TextWrapping="Wrap" Padding="10,0,0,0" BorderBrush="Black" Width="510" Height="44" Canvas.Left="30" Canvas.Top="21" PreviewKeyDown="controls_PreviewKeyDown" TextChanged="txtSearch_TextChanged"/>
+            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,3,3" Margin="0,0,0,0" Height="86" Width="569" Effect="{StaticResource DropShadowEffect}"/>
+            <Button x:Name="btnClearFilter" Height="24" Width="24" Canvas.Left="503" Canvas.Top="32" Background="{DynamicResource Brush_Grey}" Content="X" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="16" Foreground="#FF7B8E9F" Click="btnClearFilter_Click"/>
         </Canvas>
+
+
+        <!-- *** FSO INPUT AREA *** -->
+
+
+        <!-- Settings and help buttons-->
+
+
+
 
         <!-- *** RESULTS *** -->
-        <Label Content="RESULTS" Visibility="{Binding Path=UserIsSearching, Converter={StaticResource BoolVis}, FallbackValue=Hidden}" HorizontalAlignment="Left" Margin="346,197.633,0,0" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FF7B8E9F" FontSize="14" Effect="{StaticResource DropShadowEffect}"/>
-        <Canvas x:Name="canvasResults" Visibility="{Binding Path=UserIsSearching, Converter={StaticResource BoolVis}, FallbackValue=Hidden}" HorizontalAlignment="Left" Height="462.5" Margin="346,229,0,0" VerticalAlignment="Top" Width="569" Background="{StaticResource Brush_Grey}">
-            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,3,3" Height="462.5" Width="569" Effect="{StaticResource DropShadowEffect}"/>
-            <ListBox x:Name="listResult" Style="{StaticResource Style_CustomListBox}" ItemContainerStyle="{StaticResource Style_CustomListBoxItem}" Height="418" IsSynchronizedWithCurrentItem="True" Width="544" Canvas.Left="15" FocusVisualStyle="{x:Null}" SelectedIndex="0"  HorizontalContentAlignment="Stretch" ItemTemplate="{StaticResource template_resultItem_Big}" Padding="0" ItemsSource="{Binding FilteredWords}" Background="{x:Null}" BorderBrush="{x:Null}" PreviewKeyDown="controls_PreviewKeyDown" MouseDoubleClick="listResult_MouseDoubleClick" SelectionChanged="listResult_SelectionChanged" Canvas.Top="24"/>
+        <Canvas x:Name="canvasResults" HorizontalAlignment="Left" Height="548" Margin="346,174,0,0" VerticalAlignment="Top" Width="569" Background="{StaticResource Brush_Grey}">
+            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,3,3" Height="548" Width="569" Effect="{StaticResource DropShadowEffect}"/>
+            <!--"-->
+            <ListBox x:Name="listResult" Height="518" 
+				IsSynchronizedWithCurrentItem="True" Width="544" Canvas.Left="15" FocusVisualStyle="{x:Null}" SelectedIndex="0"  
+				HorizontalContentAlignment="Stretch" Padding="0" 
+				ItemsSource="{Binding FilteredWords}" Background="{x:Null}" BorderBrush="{x:Null}" 
+				PreviewKeyDown="controls_PreviewKeyDown" MouseDoubleClick="listResult_MouseDoubleClick" SelectionChanged="listResult_SelectionChanged" Canvas.Top="20">
+                <ListBox.Resources>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
+                </ListBox.Resources>
+                <ListBox.ItemContainerStyle>
+                    <StaticResource ResourceKey="Style_CustomListBoxItem"/>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <StaticResource ResourceKey="template_resultItem_Small"/>
+                </ListBox.ItemTemplate>
+                <ListBox.Style>
+                    <StaticResource ResourceKey="Style_CustomListBox"/>
+                </ListBox.Style>
+            </ListBox>
         </Canvas>
 
+
+        <!-- HELP AREA -->
+
+
+        <Canvas Visibility="{Binding InputInProgress, Converter={StaticResource BoolVis}, FallbackValue=Visible}">
+            <Canvas x:Name="canvasHelpHeadline" HorizontalAlignment="Left" Height="41" VerticalAlignment="Top" Width="275" Background="{StaticResource Brush_Grey}" Canvas.Left="957" Canvas.Top="176">
+                <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,0,0" Height="41" Width="275"  Canvas.Top="1"/>
+                <Image Source="icons/iconHelpBig.png" Height="24" Width="24" Canvas.Left="10" Canvas.Top="10"/>
+                <TextBlock Text="Archiving" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" 
+					Effect="{StaticResource DropShadowEffect}" FontSize="14.667" Canvas.Left="41" Canvas.Top="13" FontWeight="Bold"/>
+            </Canvas>
+
+            <Canvas x:Name="canvasHelp" HorizontalAlignment="Left" Height="504" VerticalAlignment="Top" Width="275" Background="{StaticResource Brush_Grey}" Canvas.Left="957" Canvas.Top="217">
+                <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="0,0,3,3" Height="504" Width="275">
+                    <ListBox x:Name="listInput" HorizontalContentAlignment="Stretch" Background="{x:Null}" Margin="9,81,9,133" ItemsSource="{Binding CurrentInput.FSONamesSorted}" 
+                             ItemTemplate="{StaticResource template_inputItem}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.Resources>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
+                        </ListBox.Resources>
+                        <ListBox.Style>
+                            <StaticResource ResourceKey="Style_CustomListBox"/>
+                        </ListBox.Style>
+                        <ListBox.ItemContainerStyle>
+                            <StaticResource ResourceKey="Style_CustomListBoxItem"/>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </Border>
+
+                <TextBlock Text="Double-click a folder to archive the selected items." HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" 
+					Effect="{StaticResource DropShadowEffect}" FontSize="14" Canvas.Left="14" Canvas.Top="24" Height="42" Width="251" TextWrapping="Wrap"/>
+                <!--  Buttons  -->
+                <CustomControls:ImageButton x:Name="btnCancelArchiving" OnClickCustom="btnCancelArchiving_Click" Height="Auto" Width="Auto" Canvas.Left="14" Canvas.Top="442" Text="Cancel archiving" ImageSource="icons/iconStop.png"/>
+                <CustomControls:ImageButton x:Name="btnNewFolder" OnClickCustom="btnNewFolder_OnClick" Height="Auto" Width="Auto" Canvas.Left="14" Canvas.Top="385" Text="Create new folder" ImageSource="icons/iconFolder.png"/>
+
+            </Canvas>
+            <Button x:Name="button" Content="Button" Canvas.Left="83" Canvas.Top="229" Width="75" Click="button_Click"/>
+
+        </Canvas>
         <!-- *** HELP BAR *** -->
         <Grid x:Name="gridHelp" HorizontalAlignment="Left" Height="51.874" Margin="0,710,0,0" VerticalAlignment="Top" Width="1280" Visibility="Hidden" d:IsLocked="True">
             <Grid.DataContext>
                 <local:ViewModelHelp x:Name="vmHelp"/>
             </Grid.DataContext>
             <Grid.Style>
-                <Style TargetType="Grid">
+                <Style TargetType="{x:Type Grid}">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding Path=HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Neutral}">
+                        <DataTrigger Binding="{Binding HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Neutral}">
                             <Setter Property="Background" Value="{StaticResource Brush_Blue}"/>
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding Path=HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Positive}">
+                        <DataTrigger Binding="{Binding HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Positive}">
                             <Setter Property="Background" Value="{StaticResource Brush_Green}"/>
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding Path=HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Negative}">
+                        <DataTrigger Binding="{Binding HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Negative}">
                             <Setter Property="Background" Value="{StaticResource Brush_Red}"/>
                         </DataTrigger>
 
-                        <DataTrigger Binding="{Binding Path=HelpbarIsAnimating}" Value="True">
+                        <DataTrigger Binding="{Binding HelpbarIsAnimating}" Value="True">
                             <DataTrigger.EnterActions>
-                                <BeginStoryboard Storyboard="{StaticResource animateFadeinFadeout}">
-                                </BeginStoryboard>
+                                <BeginStoryboard Storyboard="{StaticResource animateFadeinFadeout}"/>
                             </DataTrigger.EnterActions>
                         </DataTrigger>
                     </Style.Triggers>
@@ -123,15 +258,15 @@
             </Grid.Style>
             <Image HorizontalAlignment="Left" Height="32" Margin="10,10,0,0" VerticalAlignment="Top" Width="32">
                 <Image.Style>
-                    <Style TargetType="Image">
+                    <Style TargetType="{x:Type Image}">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding Path=HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Neutral}">
+                            <DataTrigger Binding="{Binding HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Neutral}">
                                 <Setter Property="Source" Value="icons/iconHelp.png"/>
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding Path=HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Positive}">
+                            <DataTrigger Binding="{Binding HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Positive}">
                                 <Setter Property="Source" Value="icons/iconCheckmark.png"/>
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding Path=HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Negative}">
+                            <DataTrigger Binding="{Binding HelpbarType}" Value="{x:Static local:ViewModelHelp+HelpbarTypeEnum.Negative}">
                                 <Setter Property="Source" Value="icons/iconStop.png"/>
                             </DataTrigger>
                         </Style.Triggers>
@@ -142,9 +277,9 @@
         </Grid>
 
         <!-- *** DRAG AND DROP PANEL *** -->
-        <Canvas x:Name="canvasDragDropPanel" Visibility="{Binding Path=UserIsDragging, Converter={StaticResource BoolVis}, FallbackValue=Hidden}" HorizontalAlignment="Left" Height="462.5" Margin="23.5,229,0,0" VerticalAlignment="Top" Width="294.5" DragEnter="canvasDragDropPanel_DragEnter" DragLeave="canvasDragDropPanel_DragLeave" Drop="canvasDragDropPanel_Drop">
+        <Canvas x:Name="canvasDragDropPanel" Visibility="{Binding UserIsDragging, Converter={StaticResource BoolVis}, FallbackValue=Hidden}" HorizontalAlignment="Left" Height="462.5" Margin="23.5,229,0,0" VerticalAlignment="Top" Width="294.5" DragEnter="canvasDragDropPanel_DragEnter" DragLeave="canvasDragDropPanel_DragLeave" Drop="canvasDragDropPanel_Drop">
             <Canvas.Style>
-                <Style TargetType="Canvas">
+                <Style TargetType="{x:Type Canvas}">
                     <Setter Property="Background" Value="{StaticResource Brush_LightGrey}" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding UserIsDraggingOnDragDropPanel}" Value="True">
@@ -160,7 +295,7 @@
             <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,3,3" Margin="0,0,0,0" Height="462.5" Width="294.5" Effect="{StaticResource DropShadowEffect}"/>
             <TextBlock HorizontalAlignment="Left" Height="56" TextWrapping="Wrap" VerticalAlignment="Top" Width="216" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="21.333" Foreground="White" FontStyle="Italic" IsHitTestVisible="False" Canvas.Left="38" Canvas.Top="53">
                 <TextBlock.Style>
-                    <Style TargetType="TextBlock">
+                    <Style TargetType="{x:Type TextBlock}">
                         <Setter Property="Text" Value="Drop here to save in a new folder." />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding UserIsDraggingNote}" Value="True">
@@ -176,39 +311,7 @@
             <TextBlock HorizontalAlignment="Left" Height="68" TextWrapping="Wrap" Text="Drop to the results list to save in an existing folder." VerticalAlignment="Top" Width="216" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="21.333" Foreground="White" FontStyle="Italic" IsHitTestVisible="False" Canvas.Left="38" Canvas.Top="368"/>
         </Canvas>
 
-        <!-- *** HOW-TO PANEL *** -->
-        <Canvas x:Name="canvasHowTo" Visibility="{Binding Path=UserIsNotSearching, Converter={StaticResource BoolVis}, FallbackValue=Visible}" HorizontalAlignment="Left" Height="461.857" Margin="346,229.643,0,0" VerticalAlignment="Top" Width="569" Background="{StaticResource Brush_Grey}">
-            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,3,3" Height="462.5" Width="569" Effect="{StaticResource DropShadowEffect}"/>
-            <Button x:Name="btnNewFolder" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="92" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="11" Foreground="#FFA8A8A8" Background="{DynamicResource Brush_Grey}" Click="btnNewFolder_Click" Margin="0,0,0,0" Effect="{StaticResource DropShadowEffect}" Canvas.Left="30.873" Canvas.Top="238.644">
-                <StackPanel Margin="5,5,5,5">
-                    <Image Source="icons/IconFolderBig.png" Height="60" Width="60"/>
-                </StackPanel>
-            </Button>
-            <Button x:Name="btnNewNote" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="92" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="11" Foreground="#FFA8A8A8" Background="{DynamicResource Brush_Grey}" Click="btnNewNote_Click" Margin="0,0,0,0" Effect="{StaticResource DropShadowEffect}" Canvas.Left="165" Canvas.Top="238.644">
-                <StackPanel Margin="5,5,5,5">
-                    <Image Source="icons/IconPaperBig.png" Height="60" Width="60"/>
-                </StackPanel>
-            </Button>
-            <Button x:Name="btnChangeSettings" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="92" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="11" Foreground="#FFA8A8A8" Background="{DynamicResource Brush_Grey}" Margin="0,0,0,0" Effect="{StaticResource DropShadowEffect}" Canvas.Left="300" Canvas.Top="238.644">
-                <StackPanel Margin="5,5,5,5">
-                    <Image Source="icons/iconSettingsBig.png" Height="60" Width="60"/>
-                </StackPanel>
-            </Button>
-            <Button x:Name="btnAccessHelp" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="92" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="11" Foreground="#FFA8A8A8" Background="{DynamicResource Brush_Grey}" Margin="0,0,0,0" Effect="{StaticResource DropShadowEffect}" Canvas.Left="438" Canvas.Top="238.644">
-                <StackPanel Margin="5,5,5,5">
-                    <Image Source="icons/iconHelpBig.png" Height="60" Width="60"/>
-                </StackPanel>
-            </Button>
-            <Label Content="Create a folder" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" Effect="{StaticResource DropShadowEffect}" Canvas.Left="30.903" Canvas.Top="340.277" FontSize="14.667"/>
-            <Label Content="Create a text note" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" Effect="{StaticResource DropShadowEffect}" Canvas.Left="155" Canvas.Top="340" FontSize="14.667"/>
-            <Label Content="View help" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" Effect="{StaticResource DropShadowEffect}" Canvas.Left="452" Canvas.Top="340.277" FontSize="14.667"/>
-            <Label Content="Change settings" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" Effect="{StaticResource DropShadowEffect}" Canvas.Left="295.426" Canvas.Top="340.277" FontSize="14.667"/>
-            <Label Content="Start typing to search your archive" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" FontSize="21.333" Effect="{StaticResource DropShadowEffect}" Canvas.Left="129" Canvas.Top="44"/>
-            <Label Content="or click below to:" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" FontSize="21.333" Effect="{StaticResource DropShadowEffect}" Canvas.Left="191" Canvas.Top="127"/>
-        </Canvas>
-        <ContentControl x:Name="belowPanel"></ContentControl>
-        <Button Content="Set UC" HorizontalAlignment="Left" Margin="1059,417,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_1"/>
-        <Button Content="Button" HorizontalAlignment="Left" Margin="1059,486,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_2"/>
+
 
 
     </Grid>

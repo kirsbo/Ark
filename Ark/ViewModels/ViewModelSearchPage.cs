@@ -6,59 +6,24 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Ark.Models;
+using Ark.IO;
 using System.IO;
 
 namespace Ark.ViewModels
 {
     public class ViewModelSearchPage : DependencyObject
     {
-        private List<Word> allWords;
-        public WordFactory WordFactory;
-
-        public void CreateAndAddNewWord(WordType wordType)
+        public ioInput CurrentInput
         {
-            addNewWord(WordFactory.CreateNewWord(wordType));
+            get { return (ioInput)GetValue(CurrentInputProperty); }
+            set { SetValue(CurrentInputProperty, value); }
         }
-
-        public void CreateAndAddNoteFromFile(FileInfo noteFile)
-        {
-            Word newWord = WordFactory.CreateNoteWordFromFile(noteFile);
-            addNewWord(newWord);
-        }
-
-        public void CreateAndAddNoteFromString(string text)
-        {
-            addNewWord(WordFactory.CreateNoteWordFromString(text));
-        }
-
-        public void CreateAndAddFolderFromFolder(DirectoryInfo folder)
-        {
-            addNewWord(WordFactory.CreateFolderWordFromFolder(folder));
-        }
-
-        public void CreateAndAddFolderFromList(List<string> fsoPaths)
-        {
-            addNewWord(WordFactory.CreateFolderWordFromList(fsoPaths));
-        }
-
-        private void addNewWord(Word word)
-        {
-            allWords.Add(word);
-            Console.WriteLine("Setting filter in vm.");
-            
-            SearchFilter = word.Name;
-            Console.WriteLine("Set filter in vm.");
-            Console.WriteLine("Setting IsRenaming to true.");
-            UserIsRenamingWord = true;
-            Console.WriteLine("Set IsRenaming to true.");
-        }
-
+        public static readonly DependencyProperty CurrentInputProperty =
+            DependencyProperty.Register("CurrentInput", typeof(ioInput), typeof(ViewModelSearchPage), new PropertyMetadata(null));
 
 
 
         #region Dependency properties
-
-
 
         public bool UserDraggedFSOsOnDesktopIcon
         {
@@ -66,16 +31,6 @@ namespace Ark.ViewModels
             set { SetValue(UserDraggedFSOsOnDesktopIconProperty, value); }
         }
         public static readonly DependencyProperty UserDraggedFSOsOnDesktopIconProperty = DependencyProperty.Register("UserDraggedFSOsOnDesktopIcon", typeof(bool), typeof(ViewModelSearchPage), new PropertyMetadata(false));
-
-        public bool UserIsDraggingNote
-        {
-            get { return (bool)GetValue(UserIsDraggingNoteProperty); }
-            set { SetValue(UserIsDraggingNoteProperty, value); }
-        }
-        public static readonly DependencyProperty UserIsDraggingNoteProperty = DependencyProperty.Register("UserIsDraggingNote", typeof(bool), typeof(ViewModelSearchPage), new UIPropertyMetadata(false));
-
-
-        
 
         public bool UserIsDraggingOnDragDropPanel
         {
@@ -90,7 +45,15 @@ namespace Ark.ViewModels
             set { SetValue(UserIsDraggingProperty, value); }
         }
         public static readonly DependencyProperty UserIsDraggingProperty = DependencyProperty.Register("UserIsDragging", typeof(bool), typeof(ViewModelSearchPage), new UIPropertyMetadata(false));
-        
+
+
+
+        public bool UserIsArchiving
+        {
+            get { return (bool)GetValue(InputInProgressProperty); }
+            set { SetValue(InputInProgressProperty, value); }
+        }
+        public static readonly DependencyProperty InputInProgressProperty = DependencyProperty.Register("InputInProgress", typeof(bool), typeof(ViewModelSearchPage), new UIPropertyMetadata(false));
 
         public bool UserIsNotSearching
         {
@@ -105,54 +68,29 @@ namespace Ark.ViewModels
             set { SetValue(UserIsSearchingProperty, value); }
         }
         public static readonly DependencyProperty UserIsSearchingProperty = DependencyProperty.Register("UserIsSearching", typeof(bool), typeof(ViewModelSearchPage), new UIPropertyMetadata(true));
-
-        public List<Word> FilteredWords
-        {
-            get { return (List<Word>)GetValue(FilteredWordsProperty); }
-            set { SetValue(FilteredWordsProperty, value); }
-        }
-        public static readonly DependencyProperty FilteredWordsProperty = DependencyProperty.Register("FilteredWords", typeof(List<Word>), typeof(ViewModelSearchPage), new PropertyMetadata(default(Word)));
-
-        public string SearchFilter
-        {
-            get { return (string)GetValue(SearchFilterProperty); }
-            set { SetValue(SearchFilterProperty, value); }
-        }
-        public static readonly DependencyProperty SearchFilterProperty = DependencyProperty.Register("SearchFilter", typeof(string), typeof(ViewModelSearchPage), new UIPropertyMetadata(searchFilterChangedHandler));
+        
         #endregion
 
-        #region Results listbox filtering
-        public static void searchFilterChangedHandler(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        public void ClearInput()
         {
-            ViewModelSearchPage vmRef = (ViewModelSearchPage)sender;
-            vmRef.OnSearchFilterChanged(e);
+            CurrentInput = null;
+            UserIsArchiving = false;
         }
 
-        private void OnSearchFilterChanged(DependencyPropertyChangedEventArgs e)
+        public void SetInput(ioInput input)
         {
-            filterWords(SearchFilter);
+            CurrentInput = input;
+            UserIsArchiving = true;
         }
-        #endregion
 
-        public bool UserIsRenamingWord
+
+        public ViewModelSearchPage(ViewModelHelp vmHelp, ioInput input = null)
         {
-            get { return (bool)GetValue(UserIsRenamingWordProperty); }
-            set { SetValue(UserIsRenamingWordProperty, value); 
-                Console.WriteLine("*** Is renaming: " + value.ToString());
-            }
-        }
-        public static readonly DependencyProperty UserIsRenamingWordProperty = DependencyProperty.Register("UserIsRenamingWord", typeof(bool), typeof(ViewModelSearchPage), new PropertyMetadata(default(bool)));
-
-
-
-        public ViewModelSearchPage(ViewModelHelp vmHelp)
-        {
-            WordFactory = new WordFactory();
-
-            allWords = WordFactory.AllWords;
-            FilteredWords = new List<Word>(); // WordFactory.AllWords;
             App.CurrentVMHelp = vmHelp;
-
+            if (input != null)
+            {
+                SetInput(input);
+            }
 
 
 
@@ -187,6 +125,11 @@ namespace Ark.ViewModels
 
         }
 
+
+
+
+
+
         #region TESTFSOWatcher
         
         // Define the event handlers. 
@@ -204,32 +147,18 @@ namespace Ark.ViewModels
 
         #endregion
 
-        private void filterWords(string filter)
+        public void OpenArchiveItem(ArchiveItem item)
         {
-            if (filter.Length == 0) { FilteredWords = allWords; return; }
-
-            List<string> filterWords = filter.Split(' ').ToList();
-            List<Word> filteredWords = allWords.Where(a => filterWords.All(b => a.Name.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
-
-            //Making sure an exact match is returned as first item. This is to avoid searching for "Untitled note" and then "Untitled note 2" is shown before "Untitled note" in the results list, due to alphabetical sorting.
-            Word exactMatch = filteredWords.Find(w => w.Name.ToLower() == filter.ToLower());
-            if (exactMatch != null) 
+            if (UserIsArchiving)
             {
-                int matchIndex = filteredWords.FindIndex(w => w.Name.ToLower() == filter.ToLower());
-                if (matchIndex > 0) {
-                    filteredWords.Swap(0,matchIndex);
-                }
+                ioFSOMover mover = new ioFSOMover();
+                mover.MoveFSOsToArchiveItem(CurrentInput.FSOPaths, item);
+                ClearInput();
             }
-
-            FilteredWords = filteredWords;
+            else { 
+                System.Diagnostics.Process.Start(item.DirInfo.FullName);
+            }
         }
 
-        public void OpenWord(Word word)
-        {
-            if (word.Type.IsFolder) { System.Diagnostics.Process.Start(word.DirInfo.FullName); }
-            if (word.Type.IsNote) { App.GlobalNavigator.Navigate(new pageNote(word)); }
-        }
-
-        
     }
 }

@@ -24,16 +24,29 @@
 
     <Style x:Key="Style_CustomListBox" TargetType="{x:Type ListBox}">
         <Style.Resources>
-            <!-- Removes default windows background color from listbox selecteditem -->
+            <!-- Removes default windows background color from listbox selecteditem Win 7 -->
             <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
-            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent" />
+            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey }" Color="Transparent" />
         </Style.Resources>
+        
     </Style>
-
 
     <Style x:Key="Style_CustomListBoxItem" TargetType="{x:Type ListBoxItem}">
         <!-- Removes dotted rectangle around selected item -->
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+
+        <!-- Removes default windows background color from listbox selecteditem Win 10 -->
+        <Setter Property="Background" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                    <Border x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
 </ResourceDictionary>
