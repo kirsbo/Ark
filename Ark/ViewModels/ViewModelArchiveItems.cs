@@ -92,6 +92,16 @@ namespace Ark.ViewModels
             UserIsRenamingFolder = true;
         }
 
+        public void ArchiveWithSameName(System.IO.DirectoryInfo sourceFolder)
+        {
+            ioFSOMover mover = new ioFSOMover();
+            System.IO.DirectoryInfo di = mover.MoveFolderToArchiveRoot(sourceFolder);
+            ArchiveItem newFolder = new ArchiveItem(di);
+            allArchiveItems.Add(newFolder);
+            SearchFilter = newFolder.Name;
+            
+        }
+
 
 
     }

@@ -13,7 +13,7 @@ namespace Ark.IO
 
         public ioObject()
         {
-            string rootFolder = Properties.Settings.Default.WordRootFolder;
+            string rootFolder = Properties.Settings.Default.ArchiveRootFolder;
 
             rootFolderDI = new DirectoryInfo(rootFolder);
         }

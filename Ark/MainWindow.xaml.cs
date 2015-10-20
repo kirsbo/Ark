@@ -25,7 +25,7 @@ namespace Ark
         public MainWindow()
         {
             InitializeComponent();
-            if (System.IO.Directory.Exists(Properties.Settings.Default.WordRootFolder) == false) {
+            if (System.IO.Directory.Exists(Properties.Settings.Default.ArchiveRootFolder) == false) {
                 MessageBox.Show("Root folder not found."); //# Redirect to settings
             }
 
@@ -34,11 +34,11 @@ namespace Ark
             if (args.Length > 1)
             {
                 InputCommandLineArgs inputArgs = new InputCommandLineArgs(args);
-                mainFrame.Navigate(new pageSearch(inputArgs));
+                mainFrame.Navigate(new pageSearch(inputArgs)); //Not using App.Globalnavigator as it hasn't been initialized at this point.
             }
             else
             {
-                mainFrame.Navigate(new pageSearch());
+                mainFrame.Navigate(new pageSearch()); //Not using App.Globalnavigator as it hasn't been initialized at this point.
             }
             
             

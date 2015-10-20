@@ -49,6 +49,7 @@
     <Reference Include="PresentationFramework.Aero" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Interactivity" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -81,15 +82,11 @@
     <Compile Include="IO\ioObject.cs" />
     <Compile Include="IO\ioRenamer.cs" />
     <Compile Include="IO\InputDragDrop.cs" />
-    <Compile Include="pageAddToNew.xaml.cs">
-      <DependentUpon>pageAddToNew.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="pageAddOrCreate.xaml.cs">
-      <DependentUpon>pageAddOrCreate.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="SoundEffects.cs" />
     <Compile Include="UserControls\ArkButton.xaml.cs">
       <DependentUpon>ArkButton.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ValueConverters\ConverterBoolToVisibility.cs" />
     <Compile Include="ValueConverters\ConverterFSOPathToFriendlyName.cs" />
     <Compile Include="ValueConverters\ConverterFSOPathToIcon.cs" />
     <Compile Include="ViewModels\ViewModelArchiveItems.cs" />
@@ -99,14 +96,6 @@
     <Compile Include="ArchiveItemFactory.cs" />
     <Compile Include="WpfUtils.cs" />
     <Page Include="CustomControls\ImageButton.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="pageAddToNew.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="pageAddOrCreate.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -299,6 +288,24 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="iconCheckmark.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="icons\iconWrench.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="icons\iconInfo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SoundOpen2.wav" />
+    <None Include="Resources\SoundOpen.wav" />
+    <None Include="Resources\SoundClick.wav" />
+    <None Include="Resources\SoundArchive.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SoundThump2.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SoundThump.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Expression\Blend\.NETFramework\v4.5\Microsoft.Expression.Blend.WPF.targets" />

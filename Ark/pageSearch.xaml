@@ -69,7 +69,7 @@
                         <ContextMenu>
                             <MenuItem x:Name="btnRename"  Header="Rename" Click="btnRename_Click"/>
                             <MenuItem x:Name="btnCopyItemToClipboard"  Header="Copy" Click="btnCopyToClipboard_Click"/>
-                            <MenuItem x:Name="btnPasteFromClipboard"  Header="Paste" Click="btnPasteFromClipboard_Click"/>
+                            <MenuItem x:Name="btnPasteFromClipboard"  Header="Paste to this folder" Click="btnPasteFromClipboard_Click"/>
                         </ContextMenu>
                     </Grid.ContextMenu>
                     <Border x:Name="itemBorder" BorderThickness="2,2,2,2" BorderBrush="White" Margin="10,0,0,0" CornerRadius="3,3,3,3" Background="{StaticResource Brush_LightGrey}"/>
@@ -103,7 +103,7 @@
                     </Grid.ContextMenu>
                     <Border x:Name="itemBorder" BorderThickness="1" BorderBrush="Black" Margin="5,0,0,0" CornerRadius="3,3,3,3" Background="{DynamicResource Brush_Grey}"/>
                     <Image x:Name="imgItem" HorizontalAlignment="Left" Height="24" Margin="12,10,0,0" VerticalAlignment="Top" Width="24" Source="{Binding IconPath}"/>
-                    <TextBox x:Name="txtItemName" TextWrapping="Wrap" Text="{Binding Name, Mode=OneWay}" GotFocus="txtItemName_GotFocus" Margin="45,10,0,10" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="11" Foreground="Black" Visibility="Collapsed"/>
+                    <TextBox x:Name="txtItemName" TextWrapping="Wrap" Text="{Binding Name, Mode=OneWay}" GotFocus="txtItemName_GotFocus" Margin="45,14,5,10" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="14" Foreground="Black" Visibility="Collapsed"/>
                     <TextBlock x:Name="labelName" TextWrapping="Wrap" Text="{Binding Name}" Padding="5,0,0,5" Margin="40,14,0,10" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="14" Foreground="#FFDEDFE0" />
                     <TextBlock x:Name="labelDate" TextWrapping="Wrap" Text="{Binding LastAccessedDateFriendly}" HorizontalAlignment="Right" Margin="0,10,12,0" FontStyle="Italic" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="10" Foreground="#FFDEDFE0"/>
                 </Grid>
@@ -115,11 +115,12 @@
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
                             <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
-                            <Condition Binding="{Binding DataContext.UserIsRenamingFolder, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Page}}}" Value="true" />
+                            <Condition Binding="{Binding DataContext.UserIsRenamingFolder, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBox}}}" Value="True" />
                         </MultiDataTrigger.Conditions>
                         <Setter TargetName="txtItemName" Property="Visibility" Value="Visible" />
                         <Setter TargetName="txtItemName" Property="FocusManager.FocusedElement" Value="{Binding ElementName=txtItemName}"/>
                         <Setter TargetName="labelName" Property="Visibility" Value="Hidden" />
+                        <Setter TargetName="labelDate" Property="Visibility" Value="Hidden" />
                     </MultiDataTrigger>
                 </DataTemplate.Triggers>
             </DataTemplate>
@@ -140,11 +141,10 @@
         <DockPanel>
             <Menu DockPanel.Dock="Top" Background="{StaticResource Brush_Grey}" Height="30">
                 <MenuItem Header="_File" Foreground="#FFDEDFE0" Effect="{StaticResource DropShadowEffect}" FontFamily="Cabin" FontSize="14" Margin="5,5,0,0">
-                    <MenuItem Header="Archive _file(s)" Foreground="Black" />
-                    <MenuItem Header="Archive f_older" Foreground="Black"/>
+                    <MenuItem Header="Archive _file(s)" Foreground="Black" Click="MenuItem_ArchiveFile_Click" />
+                    <MenuItem Header="Archive f_older" Foreground="Black" Click="MenuItem_ArchiveFolder_Click"/>
                     <MenuItem Header="_New folder" Click="MenuItem_NewFolder_Click" Foreground="Black"/>
-                    <MenuItem Header="_Settings" Foreground="Black" />
-                    <MenuItem Header="_Help" Foreground="Black" />
+                    <MenuItem Header="_Settings" Foreground="Black" Click="MenuItem_Settings_Click"/>
                     <MenuItem Header="_Exit" Foreground="Black" Click="MenuItem_Exit_Click"/>
                 </MenuItem>
             </Menu>
@@ -154,7 +154,7 @@
 
         <Label Content="SEARCH YOUR ARCHIVE" HorizontalAlignment="Left" Margin="346,38,0,0" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FF7B8E9F" FontSize="14" Effect="{StaticResource DropShadowEffect}"/>
         <Canvas x:Name="canvasSearch" Background="{StaticResource Brush_Grey}" HorizontalAlignment="Left" Height="86" Margin="346,70,0,0" VerticalAlignment="Top" Width="569">
-            <TextBox x:Name="txtSearch" Text="{Binding SearchFilter, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource styleTextbox}" TextWrapping="Wrap" Padding="10,0,0,0" BorderBrush="Black" Width="510" Height="44" Canvas.Left="30" Canvas.Top="21" PreviewKeyDown="controls_PreviewKeyDown" TextChanged="txtSearch_TextChanged"/>
+            <TextBox x:Name="txtSearch" Text="{Binding SearchFilter, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource styleTextbox}" TextWrapping="Wrap" Padding="10,0,0,0" BorderBrush="Black" Width="510" Height="44" Canvas.Left="30" Canvas.Top="21" PreviewKeyDown="controls_PreviewKeyDown"/>
             <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,3,3" Margin="0,0,0,0" Height="86" Width="569" Effect="{StaticResource DropShadowEffect}"/>
             <Button x:Name="btnClearFilter" Height="24" Width="24" Canvas.Left="503" Canvas.Top="32" Background="{DynamicResource Brush_Grey}" Content="X" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="16" Foreground="#FF7B8E9F" Click="btnClearFilter_Click"/>
         </Canvas>
@@ -205,8 +205,8 @@
             </Canvas>
 
             <Canvas x:Name="canvasHelp" HorizontalAlignment="Left" Height="504" VerticalAlignment="Top" Width="275" Background="{StaticResource Brush_Grey}" Canvas.Left="957" Canvas.Top="217">
-                <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="0,0,3,3" Height="504" Width="275">
-                    <ListBox x:Name="listInput" HorizontalContentAlignment="Stretch" Background="{x:Null}" Margin="9,81,9,133" ItemsSource="{Binding CurrentInput.FSONamesSorted}" 
+                <Border BorderBrush="#727e8b" BorderThickness="0" CornerRadius="0,0,3,3" Height="504" Width="275">
+                    <ListBox x:Name="listInput" HorizontalContentAlignment="Stretch" Background="{x:Null}" Margin="9,81,9,185" ItemsSource="{Binding CurrentInput.FSONamesSorted}" 
                              ItemTemplate="{StaticResource template_inputItem}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.Resources>
                             <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
@@ -223,15 +223,18 @@
                 <TextBlock Text="Double-click a folder to archive the selected items." HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" 
 					Effect="{StaticResource DropShadowEffect}" FontSize="14" Canvas.Left="14" Canvas.Top="24" Height="42" Width="251" TextWrapping="Wrap"/>
                 <!--  Buttons  -->
-                <CustomControls:ImageButton x:Name="btnCancelArchiving" OnClickCustom="btnCancelArchiving_Click" Height="Auto" Width="Auto" Canvas.Left="14" Canvas.Top="442" Text="Cancel archiving" ImageSource="icons/iconStop.png"/>
-                <CustomControls:ImageButton x:Name="btnNewFolder" OnClickCustom="btnNewFolder_OnClick" Height="Auto" Width="Auto" Canvas.Left="14" Canvas.Top="385" Text="Create new folder" ImageSource="icons/iconFolder.png"/>
+                <CustomControls:ImageButton x:Name="btnCancelArchiving" OnClickCustom="btnCancelArchiving_Click" Height="Auto" Width="251" Canvas.Left="14" Canvas.Top="442" Text="Cancel archiving" ImageSource="icons/iconStop.png"/>
+                <CustomControls:ImageButton x:Name="btnNewFolder" OnClickCustom="btnNewFolder_OnClick" Height="Auto" Width="251" Canvas.Left="14" Canvas.Top="385" Text="Create new folder" ImageSource="icons/iconFolder.png"/>
+                <CustomControls:ImageButton x:Name="btnArchiveWithSameName" OnClickCustom="btnArchiveWithSaveName_OnClick" Height="Auto" Width="251" Canvas.Left="14" Canvas.Top="328" Text="Archive with same name" ImageSource="icons/iconFolder.png" 
+                                            Visibility="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Page}}, Path=DataContext.CurrentInput.IsSingleFolder, Converter = {StaticResource BoolVis}, FallbackValue=Hidden}"/>
+
 
             </Canvas>
-            <Button x:Name="button" Content="Button" Canvas.Left="83" Canvas.Top="229" Width="75" Click="button_Click"/>
+            <Button x:Name="button" Content="Button" Canvas.Left="120" Height="52" Canvas.Top="343" Width="75"/>
 
         </Canvas>
         <!-- *** HELP BAR *** -->
-        <Grid x:Name="gridHelp" HorizontalAlignment="Left" Height="51.874" Margin="0,710,0,0" VerticalAlignment="Top" Width="1280" Visibility="Hidden" d:IsLocked="True">
+        <Grid x:Name="gridHelp" HorizontalAlignment="Left" Height="30" Margin="0,730,0,0" VerticalAlignment="Top" Width="1280" Visibility="Hidden" d:IsLocked="True">
             <Grid.DataContext>
                 <local:ViewModelHelp x:Name="vmHelp"/>
             </Grid.DataContext>
@@ -256,7 +259,7 @@
                     </Style.Triggers>
                 </Style>
             </Grid.Style>
-            <Image HorizontalAlignment="Left" Height="32" Margin="10,10,0,0" VerticalAlignment="Top" Width="32">
+            <Image HorizontalAlignment="Left" Height="20" Width="20" Margin="10,5,0,0" VerticalAlignment="Top" >
                 <Image.Style>
                     <Style TargetType="{x:Type Image}">
                         <Style.Triggers>
@@ -273,46 +276,8 @@
                     </Style>
                 </Image.Style>
             </Image>
-            <TextBlock HorizontalAlignment="Left" Margin="91,16,0,-4.126" TextWrapping="Wrap" Text="{Binding HelpbarText}" VerticalAlignment="Top" Height="40" Width="1164" Foreground="#FFFFFEFE" FontFamily="Cabin" FontSize="14.667"/>
+            <TextBlock HorizontalAlignment="Left" Margin="45,8,0,-4.126" TextWrapping="Wrap" Text="{Binding HelpbarText}" VerticalAlignment="Top" Height="40" Width="1164" Foreground="#FFFFFEFE" FontFamily="Cabin" FontSize="12"/>
         </Grid>
-
-        <!-- *** DRAG AND DROP PANEL *** -->
-        <Canvas x:Name="canvasDragDropPanel" Visibility="{Binding UserIsDragging, Converter={StaticResource BoolVis}, FallbackValue=Hidden}" HorizontalAlignment="Left" Height="462.5" Margin="23.5,229,0,0" VerticalAlignment="Top" Width="294.5" DragEnter="canvasDragDropPanel_DragEnter" DragLeave="canvasDragDropPanel_DragLeave" Drop="canvasDragDropPanel_Drop">
-            <Canvas.Style>
-                <Style TargetType="{x:Type Canvas}">
-                    <Setter Property="Background" Value="{StaticResource Brush_LightGrey}" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding UserIsDraggingOnDragDropPanel}" Value="True">
-                            <Setter Property="Background" Value="{StaticResource Brush_Green}" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding UserIsDraggingOnDragDropPanel}" Value="False">
-                            <Setter Property="Background" Value="{StaticResource Brush_LightGrey}" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Canvas.Style>
-
-            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,3,3" Margin="0,0,0,0" Height="462.5" Width="294.5" Effect="{StaticResource DropShadowEffect}"/>
-            <TextBlock HorizontalAlignment="Left" Height="56" TextWrapping="Wrap" VerticalAlignment="Top" Width="216" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="21.333" Foreground="White" FontStyle="Italic" IsHitTestVisible="False" Canvas.Left="38" Canvas.Top="53">
-                <TextBlock.Style>
-                    <Style TargetType="{x:Type TextBlock}">
-                        <Setter Property="Text" Value="Drop here to save in a new folder." />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding UserIsDraggingNote}" Value="True">
-                                <Setter Property="Text" Value="Drop here to save in a new note." />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding UserIsDraggingNote}" Value="False">
-                                <Setter Property="Text" Value="Drop here to save in a new folder." />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-            <TextBlock HorizontalAlignment="Left" Height="68" TextWrapping="Wrap" Text="Drop to the results list to save in an existing folder." VerticalAlignment="Top" Width="216" FontFamily="/Ark;component/Fonts/#Cabin" FontSize="21.333" Foreground="White" FontStyle="Italic" IsHitTestVisible="False" Canvas.Left="38" Canvas.Top="368"/>
-        </Canvas>
-
-
-
 
     </Grid>
 </Page>

@@ -26,12 +26,48 @@ namespace Ark.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("D:\\Dropbox\\Code\\ArkCabinet\\Folders")]
-        public string WordRootFolder {
+        public string ArchiveRootFolder {
             get {
-                return ((string)(this["WordRootFolder"]));
+                return ((string)(this["ArchiveRootFolder"]));
             }
             set {
-                this["WordRootFolder"] = value;
+                this["ArchiveRootFolder"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool PlaySounds {
+            get {
+                return ((bool)(this["PlaySounds"]));
+            }
+            set {
+                this["PlaySounds"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool CloseAfterArchiving {
+            get {
+                return ((bool)(this["CloseAfterArchiving"]));
+            }
+            set {
+                this["CloseAfterArchiving"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool CloseAfterOpening {
+            get {
+                return ((bool)(this["CloseAfterOpening"]));
+            }
+            set {
+                this["CloseAfterOpening"] = value;
             }
         }
     }

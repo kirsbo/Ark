@@ -44,6 +44,11 @@
         <GradientStop Color="#bb5829" Offset="1"/>
     </LinearGradientBrush>
 
+    <LinearGradientBrush x:Key="Brush_Orange_Highlight"  EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FFFFDBB6" Offset="0"/>
+        <GradientStop Color="#dc9b5a" Offset="1"/>
+    </LinearGradientBrush>
+
 
     <!-- *** MISC BACKGROUNDS *** -->
     <LinearGradientBrush x:Key="Brush_Grey_HorizontalGradient" EndPoint="1,0.5" StartPoint="0,0.5">

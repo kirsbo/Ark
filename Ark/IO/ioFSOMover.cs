@@ -18,8 +18,18 @@ namespace Ark.IO
             return new DirectoryInfo(targetFolder);
         }
 
+        public DirectoryInfo MoveFolderToArchiveRoot(DirectoryInfo sourceFolder)
+        {
+            SoundEffects.Play(SoundEffects.EffectEnum.Archive);
+            string archiveRoot = Properties.Settings.Default.ArchiveRootFolder;
+            string newPath = Path.Combine(archiveRoot, sourceFolder.Name);
+            moveFolder(sourceFolder.FullName, newPath);
+            return new DirectoryInfo(newPath);
+        }
+
         public void MoveFSOsToArchiveItem(List<string> pathsToSave, ArchiveItem archiveItem)
         {
+            SoundEffects.Play(SoundEffects.EffectEnum.Archive);
             int folderMovedCount = 0; int fileMovedCount = 0;
             string destinationFolder = archiveItem.DirInfo.FullName; 
 
@@ -50,6 +60,7 @@ namespace Ark.IO
             if (fileMovedCount > 0) { confirmationMessage = confirmationMessage + " " + fileMovedCount + " files"; }
             confirmationMessage = confirmationMessage + " to " + archiveItem.Name + ".";
             App.CurrentVMHelp.ShowPositiveHelpbar(confirmationMessage);
+
         }
 
         private void moveFolder(string sourceFolder, string targetFolder)

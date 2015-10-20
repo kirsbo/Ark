@@ -11,7 +11,17 @@ namespace Ark.IO
     public abstract class ioInput : INotifyPropertyChanged
     {
         public bool IsSingleFile { get; set; }
-        public bool IsSingleFolder { get; set; }
+        private bool isSingleFolder;
+        public bool IsSingleFolder
+        {
+            get { return isSingleFolder; }
+            set
+            {
+                isSingleFolder = value;
+                OnPropertyChanged(new PropertyChangedEventArgs("IsSingleFolder"));
+            }
+        }
+
         public bool IsMultipleFSOs { get; set; }
         public bool IsFSO { get; set; }
         private int itemCount;
@@ -116,7 +126,7 @@ namespace Ark.IO
                     IsSingleFolder = true;
                 }
             }
-            else if (FSOPaths.Count > 1) { IsMultipleFSOs = true; }
+            else if (FSOPaths.Count > 1) { IsMultipleFSOs = true; IsSingleFolder = false;  IsSingleFile = false; }
 
             ItemCount = FSOPaths.Count;
         }

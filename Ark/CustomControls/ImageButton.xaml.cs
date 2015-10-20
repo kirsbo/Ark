@@ -35,7 +35,6 @@ namespace Ark.CustomControls
         }
 
         #region Dependency properties
-        
 
         public ImageSource ImageSource
         {

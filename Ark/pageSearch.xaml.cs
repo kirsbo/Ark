@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
+using WinForms = System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Ark.ViewModels;
 using Ark.Models;
 using Ark.IO;
+
 
 namespace Ark
 {
@@ -27,11 +29,6 @@ namespace Ark
             }
         }
 
-        private void loadArgs()
-        {
-
-        }
-
         public pageSearch(ioInput input = null)
         {
             InitializeComponent();
@@ -43,14 +40,11 @@ namespace Ark
             listResult.DataContext = vmArchiveItems;
             txtSearch.DataContext = vmArchiveItems;
 
-
             Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(delegate ()
             {
                 txtSearch.Focus();
                 Keyboard.Focus(txtSearch);
             }));
-
-
         }
 
         private void listResult_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -58,7 +52,7 @@ namespace Ark
             //All this code is to prevent double click event triggering when user double clicks the custom scrollbar in the results list.
             var src = VisualTreeHelper.GetParent((DependencyObject)e.OriginalSource);
             var srcType = src.GetType();
-            if (srcType == typeof(ListViewItem) || srcType == typeof(GridViewRowPresenter) || srcType==typeof(Grid))
+            if (srcType == typeof(ListViewItem) || srcType == typeof(GridViewRowPresenter) || srcType == typeof(Grid))
             {
                 selectArchiveItem(currentSelectedItem);
             }
@@ -71,11 +65,14 @@ namespace Ark
             {
                 case Key.Enter:
                     if (vmArchiveItems.UserIsRenamingFolder) { FinishRename(); break; }
-                    selectArchiveItem((ArchiveItem)listResult.SelectedItem);
+                    if (listResult.SelectedItem != null) { selectArchiveItem((ArchiveItem)listResult.SelectedItem); }
+                    break;
+                case Key.Escape:
+                    if (vmArchiveItems.UserIsRenamingFolder) { AbortRename(); }
                     break;
                 case Key.F2:
                     if (vmArchiveItems.UserIsRenamingFolder) { AbortRename(); break; }
-                    if (!vmArchiveItems.UserIsRenamingFolder) { StartRename(); break; }
+                    if ((!vmArchiveItems.UserIsRenamingFolder) && (listResult.SelectedItem != null)) { StartRename(); break; }
                     break;
                 case Key.Down:
                     listResult.SelectNextItem();
@@ -90,7 +87,6 @@ namespace Ark
                         if (currentSelectedItem == null) { break; }
                         e.Handled = true;
                         copyArchiveItemToClipboard(currentSelectedItem);
-
                     }
                     break;
                 case Key.V:
@@ -100,7 +96,7 @@ namespace Ark
                         if (vmArchiveItems.UserIsRenamingFolder == true) { break; }
 
                         e.Handled = true;
-                        OnPaste(false);
+                        pasteInput();
                     }
                     break;
             }
@@ -116,31 +112,24 @@ namespace Ark
             vmHelp.ShowPositiveHelpbar(String.Format("I have copied {0} to the clipboard.", archiveItem.Name));
         }
 
-        private void OnPaste(bool pasteOnSpecificItem)
+        private void addInput(ioInput input)
         {
-            InputClipboard inputClip = new InputClipboard();
-
-            managePasteInput(inputClip, pasteOnSpecificItem);
-        }
-
-        private void managePasteInput(InputClipboard inputClip, bool pasteOnSpecificItem)
-        {
-            if (!inputClip.IsFSO) { return; }
-            if (pasteOnSpecificItem)
+            if (vmSearchPage.CurrentInput == null)
             {
-                ioFSOMover fileSaver = new ioFSOMover();
-                fileSaver.MoveFSOsToArchiveItem(inputClip.FSOPaths, currentSelectedItem);
+                vmSearchPage.SetInput(input);
             }
             else
             {
-                if (vmSearchPage.CurrentInput == null) {
-                    vmSearchPage.SetInput(inputClip);
-                }
-                else
-                {
-                    vmSearchPage.CurrentInput.AddPaths(inputClip.FSOPaths);
-                }
+                vmSearchPage.CurrentInput.AddPaths(input.FSOPaths);
             }
+        }
+
+        private void pasteInput()
+        {
+            InputClipboard inputFromClipboard = new InputClipboard();
+            if (!inputFromClipboard.IsFSO) { return; }
+
+            addInput(inputFromClipboard);
         }
 
         #endregion
@@ -165,42 +154,35 @@ namespace Ark
             vmSearchPage.UserIsDragging = false;
         }
 
-        private void canvasDragDropPanel_DragEnter(object sender, DragEventArgs e)
+        private void Grid_Drop(object sender, DragEventArgs e)
         {
-            vmSearchPage.UserIsDraggingOnDragDropPanel = true;
-        }
+            vmSearchPage.UserIsDragging = false;
 
-        private void canvasDragDropPanel_DragLeave(object sender, DragEventArgs e)
-        {
-            vmSearchPage.UserIsDraggingOnDragDropPanel = false;
+            InputDragDrop inputDD = new InputDragDrop(e);
+            if (inputDD.ObjectHasDataPresent == false) { return; }
+
+            addInput(inputDD);
         }
 
         private void resultItem_DragEnter(object sender, DragEventArgs e)
         {
-            ArchiveItem word = (ArchiveItem)(sender as Grid).DataContext;
-            listResult.SelectedItem = word;
+            ArchiveItem archiveItem = (ArchiveItem)(sender as Grid).DataContext;
+            listResult.SelectedItem = archiveItem;
         }
 
-        private void canvasDragDropPanel_Drop(object sender, DragEventArgs e)
-        {
-            //## Needs rewriting 
-            vmSearchPage.UserIsDragging = false;
-            vmSearchPage.UserIsDraggingOnDragDropPanel = false;
 
-            InputDragDrop inputDD = new InputDragDrop(e);
-            if (inputDD.ObjectHasDataPresent == false) { return; }
-
-            //App.GlobalNavigator.Navigate(new pageArchive(inputDD));
-        }
 
         private void resultItem_Drop(object sender, DragEventArgs e)
         {
-            ArchiveItem word = (ArchiveItem)(sender as Grid).DataContext;
+            ArchiveItem archiveItem = (ArchiveItem)(sender as Grid).DataContext;
             InputDragDrop inputDD = new InputDragDrop(e);
             if (inputDD.ObjectHasDataPresent == false) { return; }
 
             ioFSOMover fileSaver = new ioFSOMover();
-            fileSaver.MoveFSOsToArchiveItem(inputDD.FSOPaths, word);
+
+            e.Handled = true;
+            fileSaver.MoveFSOsToArchiveItem(inputDD.FSOPaths, archiveItem);
+            if (Properties.Settings.Default.CloseAfterArchiving) { Application.Current.Shutdown(); }
         }
         #endregion
 
@@ -224,6 +206,7 @@ namespace Ark
 
         private void FinishRename()
         {
+            SoundEffects.Play(SoundEffects.EffectEnum.Thump);
             ArchiveItem selectedWord = currentSelectedItem;
 
             ListBoxItem archiveListItem = (ListBoxItem)listResult.ItemContainerGenerator.ContainerFromItem(listResult.SelectedItem);
@@ -256,6 +239,9 @@ namespace Ark
 
         #endregion
 
+
+        #region Various UI
+        
         private void txtItemName_GotFocus(object sender, RoutedEventArgs e)
         {
             TextBox thisTextBox = (TextBox)sender;
@@ -271,31 +257,12 @@ namespace Ark
 
         private void btnClearFilter_Click(object sender, RoutedEventArgs e)
         {
+            SoundEffects.Play(SoundEffects.EffectEnum.Click);
             txtSearch.Text = "";
             txtSearch.Focus();
         }
 
-        private void txtSearch_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //Code for hiding/showing help text and settings/help icons
-            if (txtSearch.Text.Length > 0)
-            {
-                vmSearchPage.UserIsSearching = true;
-                vmSearchPage.UserIsNotSearching = false;
-            }
-            else
-            {
-                vmSearchPage.UserIsSearching = false;
-                vmSearchPage.UserIsNotSearching = true;
-            }
-        }
-
-
-
-        private void Grid_Drop(object sender, DragEventArgs e)
-        {
-            canvasDragDropPanel_Drop(sender, e);
-        }
+        #endregion  
 
         private void btnCopyToClipboard_Click(object sender, RoutedEventArgs e)
         {
@@ -305,55 +272,108 @@ namespace Ark
 
         private void btnPasteFromClipboard_Click(object sender, RoutedEventArgs e)
         {
-            OnPaste(true);
+            pasteInput();
         }
 
 
-        private void btnNewFolder_Click(object sender, RoutedEventArgs e)
-        {
-            vmArchiveItems.CreateNewFolder();
-        }
 
-        private void btnCancelArchiving_Click(object sender, RoutedEventArgs e)
-        {
-            vmSearchPage.ClearInput(); 
-        }
-
+        
 
         #region MenuItem event handlers
         private void MenuItem_Exit_Click(object sender, RoutedEventArgs e)
         {
+            SoundEffects.Play(SoundEffects.EffectEnum.Click);
             Application.Current.Shutdown();
         }
 
         private void MenuItem_NewFolder_Click(object sender, RoutedEventArgs e)
         {
+            SoundEffects.Play(SoundEffects.EffectEnum.Click);
             vmArchiveItems.CreateNewFolder();
         }
 
+
+        private void MenuItem_Settings_Click(object sender, RoutedEventArgs e)
+        {
+            SoundEffects.Play(SoundEffects.EffectEnum.Click);
+            App.GlobalNavigator.Navigate(new pageSettings());
+        }
+
+
+        private void MenuItem_ArchiveFile_Click(object sender, RoutedEventArgs e)
+        {
+            SoundEffects.Play(SoundEffects.EffectEnum.Click);
+            Microsoft.Win32.OpenFileDialog fileDialog = new Microsoft.Win32.OpenFileDialog();
+            fileDialog.Multiselect = true;
+
+            Nullable<bool> dialogResult = fileDialog.ShowDialog();
+            if (dialogResult != true) { return; }
+
+            List<string> selectedFiles = new List<string>(fileDialog.FileNames);
+            vmSearchPage.CurrentInput.AddPaths(selectedFiles);
+        }
+
+        private void MenuItem_ArchiveFolder_Click(object sender, RoutedEventArgs e)
+        {
+            SoundEffects.Play(SoundEffects.EffectEnum.Click);
+            WinForms.FolderBrowserDialog folderDialog = new WinForms.FolderBrowserDialog();
+
+            WinForms.DialogResult dialogResult = folderDialog.ShowDialog();
+            if (dialogResult == WinForms.DialogResult.Cancel) { return; }
+
+            vmSearchPage.CurrentInput.AddPaths(new List<string> { folderDialog.SelectedPath });
+
+
+        }
+
+
+
+
+
+
         #endregion
 
-        private void ImageButton_Click(object sender, RoutedEventArgs e)
+        #region "Input list buttons"
+
+        private void btnArchiveWithSaveName_OnClick(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Test click");
+            string newPath = System.IO.Path.Combine(Properties.Settings.Default.ArchiveRootFolder, vmSearchPage.CurrentInput.SingleFolderDI.Name);
+            if (System.IO.Directory.Exists(newPath)) { vmHelp.ShowNegativeHelpbar("I cannot archive this folder as there is already a folder with the same name."); return; }
+
+            vmArchiveItems.ArchiveWithSameName(vmSearchPage.CurrentInput.SingleFolderDI);
+
+            vmSearchPage.ClearInput();
         }
 
         private void btnNewFolder_OnClick(object sender, RoutedEventArgs e)
         {
-
+            SoundEffects.Play(SoundEffects.EffectEnum.Click);
+            vmArchiveItems.CreateNewFolder();
         }
 
-        private void button_Click(object sender, RoutedEventArgs e)
+        private void btnCancelArchiving_Click(object sender, RoutedEventArgs e)
         {
-            //List<string> fsos = vmSearchPage.CurrentInput.FSOPaths;
-            vmSearchPage.CurrentInput.RemovePath(listInput.SelectedItem.ToString());
-
+            SoundEffects.Play(SoundEffects.EffectEnum.Click);
+            vmSearchPage.ClearInput();
         }
+
+        
 
         private void btnRemove_Click(object sender, RoutedEventArgs e)
         {
+            SoundEffects.Play(SoundEffects.EffectEnum.Click);
             vmSearchPage.CurrentInput.RemovePath(listInput.SelectedItem.ToString());
             if (vmSearchPage.CurrentInput.FSOPaths.Count == 0) { vmSearchPage.ClearInput(); }
         }
+
+        #endregion  
+        private void button_Click(object sender, RoutedEventArgs e)
+        {
+            SoundEffects.Play(SoundEffects.EffectEnum.Archive);
+
+        }
+
+       
+
     }
 }

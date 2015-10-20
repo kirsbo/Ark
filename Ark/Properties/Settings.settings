@@ -2,8 +2,17 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Ark.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="WordRootFolder" Type="System.String" Scope="User">
+    <Setting Name="ArchiveRootFolder" Type="System.String" Scope="User">
       <Value Profile="(Default)">D:\Dropbox\Code\ArkCabinet\Folders</Value>
+    </Setting>
+    <Setting Name="PlaySounds" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="CloseAfterArchiving" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="CloseAfterOpening" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

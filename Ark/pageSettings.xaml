@@ -3,11 +3,58 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:CustomControls="clr-namespace:Ark.CustomControls" 
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1280"
 	Title="pageSettings">
 
     <Grid Width="1280" Height="700">
-        
+
+        <Canvas x:Name="canvasSelectArchiveFolderHeadline" HorizontalAlignment="Left" Height="41" VerticalAlignment="Top" Width="730" Background="{StaticResource Brush_Grey}" Canvas.Left="957" Canvas.Top="176" Margin="66,87,0,0">
+            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,0,0" Height="41" Width="730"  Canvas.Top="1"/>
+            <Image Source="icons/iconWrench.png" Height="24" Width="24" Canvas.Left="10" Canvas.Top="10"/>
+            <TextBlock Text="Select archive folder" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" 
+					Effect="{StaticResource DropShadowEffect}" FontSize="14.667" Canvas.Left="41" Canvas.Top="13" FontWeight="Bold"/>
+        </Canvas>
+
+        <Canvas x:Name="canvasSelectArchiveFolder" HorizontalAlignment="Left" Height="143" VerticalAlignment="Top" Width="730" Background="{StaticResource Brush_Grey}" Canvas.Left="957" Canvas.Top="217" Margin="66,128,0,0">
+            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="0,0,3,3" Height="143" Width="730"/>
+
+            <TextBlock Text="The &quot;archive folder&quot; is where Ark saves all the items you choose to archive." HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" 
+					Effect="{StaticResource DropShadowEffect}" FontSize="14" Canvas.Left="42" Canvas.Top="24" Height="42" Width="469" TextWrapping="Wrap"/>
+            <CustomControls:ImageButton x:Name="btnBrowse" OnClickCustom="btnBrowse_OnClick" Height="41" Width="124" Canvas.Left="574" Canvas.Top="66" Text="Browse" ImageSource="icons/iconFolder.png"/>
+        </Canvas>
+        <TextBox x:Name="txtArchiveFolderPath" Text="" Style="{StaticResource styleTextbox}" TextWrapping="Wrap" Padding="10,0,0,0" BorderBrush="Black" Width="508" Height="44" Canvas.Left="30" Canvas.Top="21" Margin="106,193,0,463"/>
+
+        <Canvas x:Name="canvasSoundsHeadline" HorizontalAlignment="Left" Height="41" VerticalAlignment="Top" Width="730" Background="{StaticResource Brush_Grey}" Canvas.Left="957" Canvas.Top="176" Margin="66,298,0,0">
+            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,0,0" Height="41" Width="730"  Canvas.Top="1"/>
+            <Image Source="icons/iconWrench.png" Height="24" Width="24" Canvas.Left="10" Canvas.Top="10"/>
+            <TextBlock Text="Manage sounds" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" 
+					Effect="{StaticResource DropShadowEffect}" FontSize="14.667" Canvas.Left="41" Canvas.Top="13" FontWeight="Bold"/>
+        </Canvas>
+
+        <Canvas x:Name="canvasSounds" HorizontalAlignment="Left" Height="117" VerticalAlignment="Top" Width="730" Background="{StaticResource Brush_Grey}" Canvas.Left="957" Canvas.Top="217" Margin="66,339,0,0">
+            <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="0,0,3,3" Height="117" Width="730"/>
+            <CheckBox x:Name="checkEnableSounds" Content="Play sound effects" Canvas.Left="42" Canvas.Top="71" Foreground="#FFDEDFE0" FontSize="14" FontFamily="Cabin" Effect="{StaticResource DropShadowEffect}"/>
+            <TextBlock Text="Choose whether Ark should play sound effects." HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" 
+					Effect="{StaticResource DropShadowEffect}" FontSize="14" Canvas.Left="42" Canvas.Top="23" Height="22" Width="469" TextWrapping="Wrap"/>
+            <Canvas x:Name="canvasSoundsHeadline_Copy" HorizontalAlignment="Left" Height="41" VerticalAlignment="Top" Width="730" Background="{StaticResource Brush_Grey}" Canvas.Top="145">
+                <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="3,3,0,0" Height="41" Width="730"  Canvas.Top="1"/>
+                <Image Source="icons/iconWrench.png" Height="24" Width="24" Canvas.Left="10" Canvas.Top="10"/>
+                <TextBlock Text="Auto-close" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" 
+            		Effect="{StaticResource DropShadowEffect}" FontSize="14.667" Canvas.Left="41" Canvas.Top="13" FontWeight="Bold"/>
+            </Canvas>
+            <Canvas x:Name="canvasSounds_Copy" HorizontalAlignment="Left" Height="117" VerticalAlignment="Top" Width="730" Background="{StaticResource Brush_Grey}" Canvas.Top="186">
+                <Border BorderBrush="#727e8b" BorderThickness="1" CornerRadius="0,0,3,3" Height="117" Width="730"/>
+                <CheckBox x:Name="checkCloseAfterArchiving" Content="Close after archiving" Canvas.Left="42" Canvas.Top="71" Foreground="#FFDEDFE0" FontSize="14" FontFamily="Cabin" Effect="{StaticResource DropShadowEffect}"/>
+                <TextBlock Text="Choose whether Ark should automatically close after opening and/or archiving." HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" 
+            		Effect="{StaticResource DropShadowEffect}" FontSize="14" Canvas.Left="42" Canvas.Top="23" Height="22" Width="507" TextWrapping="Wrap"/>
+                <CheckBox x:Name="checkCloseAfterOpening" Content="Close after opening a folder" Canvas.Left="225" Canvas.Top="71" Foreground="#FFDEDFE0" FontSize="14" FontFamily="Cabin" Effect="{StaticResource DropShadowEffect}"/>
+            </Canvas>
+        </Canvas>
+        <Label Content="SETTINGS" HorizontalAlignment="Left" Margin="66,27,0,0" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FF7B8E9F" FontSize="32" Effect="{StaticResource DropShadowEffect}"/>
+
+        <CustomControls:ImageButton x:Name="btnCancel" OnClickCustom="btnCancel_OnClick" Height="41" Width="124" Canvas.Left="574" Canvas.Top="66" Text="Cancel" ImageSource="icons/iconStop.png" Margin="1108,633,48,26"/>
+        <CustomControls:ImageButton x:Name="btnSave" OnClickCustom="btnSave_OnClick" Height="41" Width="124" Canvas.Left="574" Canvas.Top="66" Text="Save" ImageSource="icons/iconCheckmark.png" Margin="962,633,194,26"/>
     </Grid>
 </Page>

@@ -4,9 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Ark.CustomControls"
+             xmlns:ValueConverters="clr-namespace:Ark.ValueConverters"
              mc:Ignorable="d" Height="43.667" Width="245.667">
     <UserControl.Resources>
         <ResourceDictionary>
+            <ValueConverters:ConverterHideIfNoImageSource x:Key="BoolToVisibility" />
             <Style x:Key="FocusVisual">
                 <Setter Property="Control.Template">
                     <Setter.Value>
@@ -25,7 +27,7 @@
             <SolidColorBrush x:Key="Button.Disabled.Background" Color="#FFF4F4F4"/>
             <SolidColorBrush x:Key="Button.Disabled.Border" Color="#FFADB2B5"/>
             <SolidColorBrush x:Key="Button.Disabled.Foreground" Color="#FF838383"/>
-            <Style x:Key="ButtonStyle1" TargetType="{x:Type Button}">
+            <Style x:Key="imageButtonStyle" TargetType="{x:Type Button}">
                 <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
                 <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
                 <Setter Property="BorderBrush" Value="{StaticResource Button.Static.Border}"/>
@@ -49,8 +51,8 @@
                                     <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource Brush_Orange}"/>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="true">
-                                    <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Pressed.Background}"/>
-                                    <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Pressed.Border}"/>
+                                    <Setter Property="Background" TargetName="border" Value="{StaticResource Brush_Orange_Highlight}"/>
+                                    <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Brush_Orange_Highlight}"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="false">
                                     <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Disabled.Background}"/>
@@ -66,12 +68,12 @@
     </UserControl.Resources>
     
     <Grid>
-        <Button x:Name="buttonControl" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalAlignment="Top" Width="245" 
-                Height="43" Background="{DynamicResource Brush_Grey}" Effect="{StaticResource DropShadowEffect}" Style="{DynamicResource ButtonStyle1}">
+        <Button x:Name="buttonControl" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalAlignment="Top"  
+                Width="{Binding Path=Width}" Height="{Binding Path=Height}" Background="{DynamicResource Brush_Grey}" Effect="{StaticResource DropShadowEffect}" Style="{DynamicResource imageButtonStyle}">
             <StackPanel Margin="10,5,5,5" Orientation="Horizontal">
-                <Image Source="{Binding Path=ImageSource}" Height="24" Width="24"/>
+                <Image x:Name="buttonImage" Source="{Binding Path=ImageSource}" Height="24" Width="24" Visibility="{Binding Converter={StaticResource BoolToVisibility}}"/>
                 <Label Content="{Binding Path=Text}" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Cabin" Foreground="#FFDEDFE0" 
-                       Effect="{StaticResource DropShadowEffect}" FontSize="14.667" Margin="0,3,0,0"/>
+                       Effect="{StaticResource DropShadowEffect}" FontSize="14.667" Margin="0,1,0,0"/>
             </StackPanel>
         </Button>
     </Grid>

@@ -25,20 +25,6 @@ namespace Ark.ViewModels
 
         #region Dependency properties
 
-        public bool UserDraggedFSOsOnDesktopIcon
-        {
-            get { return (bool)GetValue(UserDraggedFSOsOnDesktopIconProperty); }
-            set { SetValue(UserDraggedFSOsOnDesktopIconProperty, value); }
-        }
-        public static readonly DependencyProperty UserDraggedFSOsOnDesktopIconProperty = DependencyProperty.Register("UserDraggedFSOsOnDesktopIcon", typeof(bool), typeof(ViewModelSearchPage), new PropertyMetadata(false));
-
-        public bool UserIsDraggingOnDragDropPanel
-        {
-            get { return (bool)GetValue(UserIsDraggingOnDragDropPanelProperty); }
-            set { SetValue(UserIsDraggingOnDragDropPanelProperty, value); }
-        }
-        public static readonly DependencyProperty UserIsDraggingOnDragDropPanelProperty = DependencyProperty.Register("UserIsDraggingOnDragDropPanel", typeof(bool), typeof(ViewModelSearchPage), new UIPropertyMetadata(false));
-
         public bool UserIsDragging
         {
             get { return (bool)GetValue(UserIsDraggingProperty); }
@@ -55,20 +41,6 @@ namespace Ark.ViewModels
         }
         public static readonly DependencyProperty InputInProgressProperty = DependencyProperty.Register("InputInProgress", typeof(bool), typeof(ViewModelSearchPage), new UIPropertyMetadata(false));
 
-        public bool UserIsNotSearching
-        {
-            get { return (bool)GetValue(UserIsNotSearchingProperty); }
-            set { SetValue(UserIsNotSearchingProperty, value); }
-        }
-        public static readonly DependencyProperty UserIsNotSearchingProperty = DependencyProperty.Register("UserIsNotSearching", typeof(bool), typeof(ViewModelSearchPage), new UIPropertyMetadata(true));
-
-        public bool UserIsSearching
-        {
-            get { return (bool)GetValue(UserIsSearchingProperty); }
-            set { SetValue(UserIsSearchingProperty, value); }
-        }
-        public static readonly DependencyProperty UserIsSearchingProperty = DependencyProperty.Register("UserIsSearching", typeof(bool), typeof(ViewModelSearchPage), new UIPropertyMetadata(true));
-        
         #endregion
 
         public void ClearInput()
@@ -154,9 +126,14 @@ namespace Ark.ViewModels
                 ioFSOMover mover = new ioFSOMover();
                 mover.MoveFSOsToArchiveItem(CurrentInput.FSOPaths, item);
                 ClearInput();
+                if (Properties.Settings.Default.CloseAfterArchiving) { Application.Current.Shutdown(); }
+
             }
-            else { 
+            else {
+
+                SoundEffects.Play(SoundEffects.EffectEnum.Click);
                 System.Diagnostics.Process.Start(item.DirInfo.FullName);
+                if (Properties.Settings.Default.CloseAfterOpening) { Application.Current.Shutdown(); }
             }
         }
 

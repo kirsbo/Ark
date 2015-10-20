@@ -16,7 +16,7 @@ namespace Ark
             get
             {
                 List<ArchiveItem> allArchiveItems = new List<ArchiveItem>();
-                string rootFolder = Properties.Settings.Default.WordRootFolder;
+                string rootFolder = Properties.Settings.Default.ArchiveRootFolder;
 
                 DirectoryInfo rootFolderDI = new DirectoryInfo(rootFolder);
 
