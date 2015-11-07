@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Ark.Models;
 using Ark.IO;
+using System.IO;
 
 
 namespace Ark.ViewModels
@@ -13,11 +14,12 @@ namespace Ark.ViewModels
     public class ViewModelArchiveItems : DependencyObject
     {
         private List<ArchiveItem> allArchiveItems;
-        private ArchiveItemFactory archiveItemFactory;
+        private DirectoryInfo rootFolder;
  
         public ViewModelArchiveItems()
         {
-            archiveItemFactory = new ArchiveItemFactory();
+            rootFolder = new DirectoryInfo(Properties.Settings.Default.ArchiveRootFolder);
+            ArchiveItemFactory archiveItemFactory = new ArchiveItemFactory();
             allArchiveItems = archiveItemFactory.AllArchiveItems;
             FilteredWords = allArchiveItems;
         }
@@ -58,12 +60,12 @@ namespace Ark.ViewModels
         #endregion
 
 
-        
-
 
         private void filterWords(string filter)
         {
-            if (filter.Length == 0) { FilteredWords = allArchiveItems; return; }
+            if (filter.Length == 0) { 
+                FilteredWords = allArchiveItems; return; 
+            }
 
             List<string> filterWords = filter.Split(' ').ToList();
             List<ArchiveItem> filteredWords = allArchiveItems.Where(a => filterWords.All(b => a.Name.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
@@ -92,17 +94,51 @@ namespace Ark.ViewModels
             UserIsRenamingFolder = true;
         }
 
-        public void ArchiveWithSameName(System.IO.DirectoryInfo sourceFolder)
+        public void DeleteFolder(ArchiveItem itemToBeDeleted)
         {
-            ioFSOMover mover = new ioFSOMover();
-            System.IO.DirectoryInfo di = mover.MoveFolderToArchiveRoot(sourceFolder);
-            ArchiveItem newFolder = new ArchiveItem(di);
-            allArchiveItems.Add(newFolder);
-            SearchFilter = newFolder.Name;
-            
+            Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(itemToBeDeleted.DirInfo.FullName, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+            allArchiveItems.Remove(itemToBeDeleted);
+            SearchFilter = " ";
+            SearchFilter = "";
+            App.CurrentVMHelp.ShowPositiveHelpbar(String.Format("I have deleted {0}. It can be recovered from the Windows recycle bin.", itemToBeDeleted.Name));
         }
 
+        public void ArchiveInput(ioInput input, DirectoryInfo targetFolder = null)
+        {
+            bool archivingWithSameName = false;
+            if (targetFolder == null) {
+                targetFolder = rootFolder;
+                archivingWithSameName = true; //Handling the edge case where user clicked "Archive with same name", i.e. Creating a new folder in the root with the same name as the folder being archived (basically just moving a folder from somewhere to ark root).
+            }
+            archiveItems(input.FSOPaths, targetFolder);
 
+            string searchFilter = "";
+            if (archivingWithSameName)
+            {
+                DirectoryInfo di = new DirectoryInfo(input.FSOPaths[0]);
+                
+                string sameNameNewPath = System.IO.Path.Combine(rootFolder.FullName, di.Name);
+                DirectoryInfo sameNameNewPathDI = new DirectoryInfo(sameNameNewPath);
+                allArchiveItems.Add(new ArchiveItem(sameNameNewPathDI));
+                searchFilter = sameNameNewPathDI.Name;
+            }
+            else
+            {
+                searchFilter = targetFolder.Name;
+            }
+
+            SearchFilter = searchFilter; 
+        }
+
+        private void archiveItems(List<string> paths, DirectoryInfo targetFolder)
+        {
+            ioFSOMover mover = new ioFSOMover();
+            mover.MoveFSOsToArchive(paths, targetFolder);
+
+            
+            SoundEffects.Play(SoundEffects.EffectEnum.Archive);
+            if (Properties.Settings.Default.CloseAfterArchiving) { Application.Current.Shutdown(); }
+        }
 
     }
 }

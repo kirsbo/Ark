@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,6 +15,11 @@ namespace Ark
             list[indexA] = list[indexB];
             list[indexB] = tmp;
             return list;
+        }
+
+        public static List<string> ToList(this DirectoryInfo di)
+        {
+            return new List<string> { di.FullName };
         }
     }
 }

@@ -26,7 +26,8 @@ namespace Ark
         {
             InitializeComponent();
             if (System.IO.Directory.Exists(Properties.Settings.Default.ArchiveRootFolder) == false) {
-                MessageBox.Show("Root folder not found."); //# Redirect to settings
+                mainFrame.Navigate(new pageSettings());
+                return;
             }
 
             string[] args = Environment.GetCommandLineArgs();

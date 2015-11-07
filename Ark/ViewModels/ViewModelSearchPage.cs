@@ -16,12 +16,22 @@ namespace Ark.ViewModels
         public ioInput CurrentInput
         {
             get { return (ioInput)GetValue(CurrentInputProperty); }
-            set { SetValue(CurrentInputProperty, value); }
+            set {
+                SetValue(CurrentInputProperty, value);
+                
+                if (value == null) {
+                    UserIsArchiving = false;
+                }
+                else {
+                    UserIsArchiving = true;
+                }
+                
+            }
         }
         public static readonly DependencyProperty CurrentInputProperty =
             DependencyProperty.Register("CurrentInput", typeof(ioInput), typeof(ViewModelSearchPage), new PropertyMetadata(null));
 
-
+        ViewModelArchiveItems vmArchive; 
 
         #region Dependency properties
 
@@ -43,97 +53,42 @@ namespace Ark.ViewModels
 
         #endregion
 
-        public void ClearInput()
-        {
-            CurrentInput = null;
-            UserIsArchiving = false;
-        }
-
-        public void SetInput(ioInput input)
-        {
-            CurrentInput = input;
-            UserIsArchiving = true;
-        }
-
-
-        public ViewModelSearchPage(ViewModelHelp vmHelp, ioInput input = null)
+        public ViewModelSearchPage(ViewModelHelp vmHelp, ViewModelArchiveItems vmArchiveItems, ioInput input = null)
         {
             App.CurrentVMHelp = vmHelp;
+            vmArchive = vmArchiveItems;
+
             if (input != null)
             {
-                SetInput(input);
+                CurrentInput = input; 
             }
-
-
-
-            //## Setting up watcher -- 
-            /*This needs to be refactored out into a watcher class that's referenced from this view model. This allows us to automatically update the allwords collection depending on folder 
-             * and txt file events like creation, deletion, renaming etc. This allows us to get rid of a whole lot of code, since now the allwords collection will just reflect the filesystem. 
-             * i.e. we do not need to create words from the view model through the io objects. Instead we can just create/delete/rename the underlying FSO objects. Meaning we can do it from any 
-             * window / page without caring:
-             * The words collection will always be up to date (as it's either initialized from scratch or updated by the FSO watcher class which is kept alive from the vmSearchPage.
-             * All the "CreateAndXXXX" methods in this class can be removed for example, and from pageAddToNew or pageAddToExisting, we can easily create objects. We can also simplify and clean
-             * out the ioobjects, so they are real simple objects.
-             * 
-             * 
-             * 
-             * */
-            FileSystemWatcher watcher = new FileSystemWatcher();
-
-            watcher.Path = @"D:\Dropbox\Code\ArkCabinet\Folders\";
-            /* Watch for changes in LastAccess and LastWrite times, and
-               the renaming of files or directories. */
-            watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-
-            // Add event handlers.
-            watcher.Created += new FileSystemEventHandler(OnChanged);
-            watcher.Deleted += new FileSystemEventHandler(OnChanged);
-            watcher.Renamed += new RenamedEventHandler(OnRenamed);
-
-            // Begin watching.
-            watcher.EnableRaisingEvents = true;
-
-
-
         }
 
-
-
-
-
-
-        #region TESTFSOWatcher
-        
-        // Define the event handlers. 
-        private static void OnChanged(object source, FileSystemEventArgs e)
-        {
-            // Specify what is done when a file is changed, created, or deleted.
-            Console.WriteLine("File: " + e.FullPath + " " + e.ChangeType);
-        }
-
-        private static void OnRenamed(object source, RenamedEventArgs e)
-        {
-            // Specify what is done when a file is renamed.
-            Console.WriteLine("File: {0} renamed to {1}", e.OldFullPath, e.FullPath);
-        }
-
-        #endregion
-
-        public void OpenArchiveItem(ArchiveItem item)
+        public void SelectArchiveItem(ArchiveItem selectedItem)
         {
             if (UserIsArchiving)
             {
-                ioFSOMover mover = new ioFSOMover();
-                mover.MoveFSOsToArchiveItem(CurrentInput.FSOPaths, item);
-                ClearInput();
-                if (Properties.Settings.Default.CloseAfterArchiving) { Application.Current.Shutdown(); }
-
+                vmArchive.ArchiveInput(CurrentInput, selectedItem.DirInfo);
+                CurrentInput = null;
             }
-            else {
-
+            else
+            {
                 SoundEffects.Play(SoundEffects.EffectEnum.Click);
-                System.Diagnostics.Process.Start(item.DirInfo.FullName);
+                System.Diagnostics.Process.Start(selectedItem.DirInfo.FullName);
+
                 if (Properties.Settings.Default.CloseAfterOpening) { Application.Current.Shutdown(); }
+            }
+        }
+
+        public void AddInput(ioInput input) 
+        {
+            if (CurrentInput == null)
+            {
+                CurrentInput = input;
+            }
+            else
+            {
+                CurrentInput.AddPaths(input.FSOPaths);
             }
         }
 

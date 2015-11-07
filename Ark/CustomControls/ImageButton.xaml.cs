@@ -20,14 +20,11 @@ namespace Ark.CustomControls
     /// </summary>
     public partial class ImageButton : UserControl
     {
-        private Button _controlButton;
-
         public ImageButton()
         {
             InitializeComponent();
             this.DataContext = this;
 
-            _controlButton = GetTemplateChild("buttonControl") as Button;
 
             if (buttonControl != null)
             { buttonControl.Click += onClick; }

@@ -25,30 +25,13 @@ namespace Ark
                     allArchiveItems.Add(new ArchiveItem(folder));
                 }
 
-                return allArchiveItems.OrderBy(x => x.CreatedDate).ToList();
+                return allArchiveItems.OrderByDescending(x => x.LastAccessedDate).ToList();
             }
         }
 
         public ArchiveItemFactory()
         {
 
-        }
-
-        public ArchiveItem CreateUntitledArchiveItem()
-        {
-            ioFolderCreator folderCreator = new ioFolderCreator();
-            DirectoryInfo di = folderCreator.CreateNewFolder();
-            ArchiveItem word = new ArchiveItem(di);
-            return word;
-        }
-
-
-        public ArchiveItem CreateArchiveItemFromFolder(DirectoryInfo folderDI)
-        {
-            ioFolderCreator folderCreator = new ioFolderCreator();
-            ArchiveItem newWord = new ArchiveItem(folderCreator.CreateFolderFromDI(folderDI));
-
-            return newWord;
         }
 
 

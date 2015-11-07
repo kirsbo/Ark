@@ -7,6 +7,7 @@ using WinForms = System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Microsoft.VisualBasic;
 using Ark.ViewModels;
 using Ark.Models;
 using Ark.IO;
@@ -20,7 +21,6 @@ namespace Ark
     public partial class pageSearch : Page
     {
         private ViewModelSearchPage vmSearchPage;
-        private ViewModelArchiveItems vmArchiveItems;
         private ArchiveItem currentSelectedItem
         {
             get
@@ -32,13 +32,9 @@ namespace Ark
         public pageSearch(ioInput input = null)
         {
             InitializeComponent();
-            vmSearchPage = new ViewModelSearchPage(vmHelp, input);
+            vmSearchPage = new ViewModelSearchPage(vmHelp, vmArchive, input);
 
             this.DataContext = vmSearchPage;
-
-            vmArchiveItems = new ViewModelArchiveItems();
-            listResult.DataContext = vmArchiveItems;
-            txtSearch.DataContext = vmArchiveItems;
 
             Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(delegate ()
             {
@@ -64,15 +60,15 @@ namespace Ark
             switch (e.Key)
             {
                 case Key.Enter:
-                    if (vmArchiveItems.UserIsRenamingFolder) { FinishRename(); break; }
+                    if (vmArchive.UserIsRenamingFolder) { FinishRename(); break; }
                     if (listResult.SelectedItem != null) { selectArchiveItem((ArchiveItem)listResult.SelectedItem); }
                     break;
                 case Key.Escape:
-                    if (vmArchiveItems.UserIsRenamingFolder) { AbortRename(); }
+                    if (vmArchive.UserIsRenamingFolder) { AbortRename(); }
                     break;
                 case Key.F2:
-                    if (vmArchiveItems.UserIsRenamingFolder) { AbortRename(); break; }
-                    if ((!vmArchiveItems.UserIsRenamingFolder) && (listResult.SelectedItem != null)) { StartRename(); break; }
+                    if (vmArchive.UserIsRenamingFolder) { AbortRename(); break; }
+                    if ((!vmArchive.UserIsRenamingFolder) && (listResult.SelectedItem != null)) { StartRename(); break; }
                     break;
                 case Key.Down:
                     listResult.SelectNextItem();
@@ -80,10 +76,15 @@ namespace Ark
                 case Key.Up:
                     listResult.SelectPreviousItem();
                     break;
+                case Key.Delete:
+                    if (vmArchive.UserIsRenamingFolder) { break; }
+                    vmArchive.DeleteFolder((ArchiveItem)listResult.SelectedItem);
+                    txtSearch.Focus();
+                    break;
                 case Key.C:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
-                        if (vmArchiveItems.UserIsRenamingFolder == true) { break; }
+                        if (vmArchive.UserIsRenamingFolder == true) { break; }
                         if (currentSelectedItem == null) { break; }
                         e.Handled = true;
                         copyArchiveItemToClipboard(currentSelectedItem);
@@ -93,7 +94,7 @@ namespace Ark
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         //If user is renaming, pasting will insert plain text into the textbox. If user is not renaming, we attempt to paste to the selected word or a new word.
-                        if (vmArchiveItems.UserIsRenamingFolder == true) { break; }
+                        if (vmArchive.UserIsRenamingFolder == true) { break; }
 
                         e.Handled = true;
                         pasteInput();
@@ -112,31 +113,19 @@ namespace Ark
             vmHelp.ShowPositiveHelpbar(String.Format("I have copied {0} to the clipboard.", archiveItem.Name));
         }
 
-        private void addInput(ioInput input)
-        {
-            if (vmSearchPage.CurrentInput == null)
-            {
-                vmSearchPage.SetInput(input);
-            }
-            else
-            {
-                vmSearchPage.CurrentInput.AddPaths(input.FSOPaths);
-            }
-        }
-
         private void pasteInput()
         {
             InputClipboard inputFromClipboard = new InputClipboard();
-            if (!inputFromClipboard.IsFSO) { return; }
-
-            addInput(inputFromClipboard);
+            if (inputFromClipboard.IsFSO) {
+                vmSearchPage.AddInput(inputFromClipboard);
+            }
         }
 
         #endregion
 
         private void selectArchiveItem(ArchiveItem archiveItem)
         {
-            vmSearchPage.OpenArchiveItem(archiveItem);
+            vmSearchPage.SelectArchiveItem(archiveItem);
         }
 
         #region DragDrop handling
@@ -161,7 +150,7 @@ namespace Ark
             InputDragDrop inputDD = new InputDragDrop(e);
             if (inputDD.ObjectHasDataPresent == false) { return; }
 
-            addInput(inputDD);
+            vmSearchPage.AddInput(inputDD);
         }
 
         private void resultItem_DragEnter(object sender, DragEventArgs e)
@@ -174,15 +163,22 @@ namespace Ark
 
         private void resultItem_Drop(object sender, DragEventArgs e)
         {
-            ArchiveItem archiveItem = (ArchiveItem)(sender as Grid).DataContext;
+            ArchiveItem selectedArchiveItem = (ArchiveItem)(sender as Grid).DataContext;
             InputDragDrop inputDD = new InputDragDrop(e);
             if (inputDD.ObjectHasDataPresent == false) { return; }
 
-            ioFSOMover fileSaver = new ioFSOMover();
-
             e.Handled = true;
-            fileSaver.MoveFSOsToArchiveItem(inputDD.FSOPaths, archiveItem);
-            if (Properties.Settings.Default.CloseAfterArchiving) { Application.Current.Shutdown(); }
+
+            vmArchive.ArchiveInput(inputDD, selectedArchiveItem.DirInfo);
+        }
+        #endregion
+
+        #region Deletion
+
+        private void btnDelete_Click(object sender, RoutedEventArgs e)
+        {
+            vmArchive.DeleteFolder((ArchiveItem)listResult.SelectedItem);
+            txtSearch.Focus();
         }
         #endregion
 
@@ -194,7 +190,7 @@ namespace Ark
 
         private void StartRename()
         {
-            vmArchiveItems.UserIsRenamingFolder = true;
+            vmArchive.UserIsRenamingFolder = true;
             //Below is to make sure that the textbox holds the same value as the label (word name) when starting to rename. 
             //These could get out of sync if user first renames one textbox, but does not press enter (i.e. saving the rename), and then later tries to rename the same item again:
             //In this case the previously edited value will be shown, as there's only one-way databinding on the textbox (to avoid updating the word object before user has accepted the rename).
@@ -221,20 +217,20 @@ namespace Ark
             {
                 //This just syncs label with the new name (without the below line, the new name wouldn't get reflected in the label until user entered a new search query, thereby updating the collection).
                 archiveItemNameLabel.Text = newName;
-                vmArchiveItems.SearchFilter = newName;
+                vmArchive.SearchFilter = newName;
             }
 
-            vmArchiveItems.UserIsRenamingFolder = false;
+            vmArchive.UserIsRenamingFolder = false;
         }
 
         private void AbortRename()
         {
-            vmArchiveItems.UserIsRenamingFolder = false;
+            vmArchive.UserIsRenamingFolder = false;
         }
 
         private void listResult_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (vmArchiveItems.UserIsRenamingFolder) { AbortRename(); }
+            if (vmArchive.UserIsRenamingFolder) { AbortRename(); }
         }
 
         #endregion
@@ -289,7 +285,7 @@ namespace Ark
         private void MenuItem_NewFolder_Click(object sender, RoutedEventArgs e)
         {
             SoundEffects.Play(SoundEffects.EffectEnum.Click);
-            vmArchiveItems.CreateNewFolder();
+            vmArchive.CreateNewFolder();
         }
 
 
@@ -335,26 +331,22 @@ namespace Ark
 
         #region "Input list buttons"
 
-        private void btnArchiveWithSaveName_OnClick(object sender, RoutedEventArgs e)
+        private void btnArchiveWithSameName_OnClick(object sender, RoutedEventArgs e)
         {
-            string newPath = System.IO.Path.Combine(Properties.Settings.Default.ArchiveRootFolder, vmSearchPage.CurrentInput.SingleFolderDI.Name);
-            if (System.IO.Directory.Exists(newPath)) { vmHelp.ShowNegativeHelpbar("I cannot archive this folder as there is already a folder with the same name."); return; }
-
-            vmArchiveItems.ArchiveWithSameName(vmSearchPage.CurrentInput.SingleFolderDI);
-
-            vmSearchPage.ClearInput();
+            vmArchive.ArchiveInput(vmSearchPage.CurrentInput);
+            vmSearchPage.CurrentInput = null;
         }
 
         private void btnNewFolder_OnClick(object sender, RoutedEventArgs e)
         {
             SoundEffects.Play(SoundEffects.EffectEnum.Click);
-            vmArchiveItems.CreateNewFolder();
+            vmArchive.CreateNewFolder();
         }
 
         private void btnCancelArchiving_Click(object sender, RoutedEventArgs e)
         {
             SoundEffects.Play(SoundEffects.EffectEnum.Click);
-            vmSearchPage.ClearInput();
+            vmSearchPage.CurrentInput = null; 
         }
 
         
@@ -363,15 +355,20 @@ namespace Ark
         {
             SoundEffects.Play(SoundEffects.EffectEnum.Click);
             vmSearchPage.CurrentInput.RemovePath(listInput.SelectedItem.ToString());
-            if (vmSearchPage.CurrentInput.FSOPaths.Count == 0) { vmSearchPage.ClearInput(); }
+            if (vmSearchPage.CurrentInput.FSOPaths.Count == 0) { vmSearchPage.CurrentInput = null; }
         }
 
         #endregion  
-        private void button_Click(object sender, RoutedEventArgs e)
-        {
-            SoundEffects.Play(SoundEffects.EffectEnum.Archive);
 
+
+        private void MenuItem_OpenArchiveFolder_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(Properties.Settings.Default.ArchiveRootFolder);
         }
+
+
+
+   
 
        
 

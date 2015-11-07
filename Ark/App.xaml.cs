@@ -27,10 +27,15 @@ namespace Ark
         protected override void OnNavigated(NavigationEventArgs e)
         {
             base.OnNavigated(e);
-            Page page = (Page)e.Content;
-            if (page != null) { 
-                GlobalNavigator = page.NavigationService;
+            if (e.Content is Page)
+            {
+                Page page = (Page)e.Content;
+                if (page != null)
+                {
+                    GlobalNavigator = page.NavigationService;
+                }
             }
+            
         }
     }
 }

@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="ArchiveRootFolder" Type="System.String" Scope="User">
-      <Value Profile="(Default)">D:\Dropbox\Code\ArkCabinet\Folders</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="PlaySounds" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
