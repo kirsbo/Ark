@@ -1,6 +1,6 @@
-File and folder archiving application for MS Windows.
+File and folder archiving application for MS Windows, released December 2015.
 
-Developed in C#, WPF with a little bit of WinAPI
+Developed in C#, WPF with a little bit of WinAPI.
 
 Click the image below to watch the YouTube video of Ark:
 
